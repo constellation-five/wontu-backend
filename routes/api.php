@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\GoogleAuthController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/ping', function (): array {
@@ -7,3 +8,7 @@ Route::get('/ping', function (): array {
         'status' => 'ok',
     ];
 });
+
+Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirect']);
+Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback']);
+Route::post('/auth/google/register', [GoogleAuthController::class, 'register']);
