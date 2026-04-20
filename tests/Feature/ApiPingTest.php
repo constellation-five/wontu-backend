@@ -8,7 +8,7 @@ class ApiPingTest extends TestCase
 {
     public function test_the_api_ping_route_returns_a_successful_response(): void
     {
-        $response = $this->getJson('/api/ping');
+        $response = $this->getJson('/ping');
 
         $response
             ->assertOk()
