@@ -25,13 +25,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
         return response()->json(['message' => 'Successfully logged out']);
     });
-});
 
-Route::middleware('auth:sanctum')->group(function () {
     // Payment Method Routes
     Route::get('/payment-methods', [PaymentMethodController::class, 'index']);
     Route::post('/payment-methods', [PaymentMethodController::class, 'store']);
     Route::put('/payment-methods/{id}', [PaymentMethodController::class, 'update']);
     Route::delete('/payment-methods/{id}', [PaymentMethodController::class, 'destroy']);
-    
 });
+
