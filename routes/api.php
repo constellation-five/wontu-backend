@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\GoogleAuthController;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/ping', function (): array {
@@ -20,7 +21,10 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::post('/auth/logout', function (Request $request) {
-        $request->user()->currentAccessToken()->delete();
+        Auth::guard('web')->logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         return response()->json(['message' => 'Successfully logged out']);
     });

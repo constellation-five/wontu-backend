@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\GoogleProvider;
 
@@ -42,12 +43,10 @@ class GoogleAuthController extends Controller
                 'avatar' => $googleUser->avatar,
             ]);
 
-            $token = $user->createToken('auth_token')->plainTextToken;
+            Auth::login($user);
 
             return response()->json([
                 'message' => 'Successfully signed in with Google.',
-                'access_token' => $token,
-                'token_type' => 'Bearer',
                 'user' => $user,
             ]);
         }
@@ -90,12 +89,10 @@ class GoogleAuthController extends Controller
             'username' => $validated['username'],
         ]);
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+        Auth::login($user);
 
         return response()->json([
             'message' => 'Successfully registered and signed in.',
-            'access_token' => $token,
-            'token_type' => 'Bearer',
             'user' => $user,
         ], 201);
     }
