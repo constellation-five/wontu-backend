@@ -9,7 +9,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
-use Laravel\Socialite\Two\GoogleProvider;
 
 class GoogleAuthController extends Controller
 {
@@ -18,10 +17,7 @@ class GoogleAuthController extends Controller
      */
     public function redirect(): JsonResponse|RedirectResponse
     {
-        /** @var GoogleProvider $provider */
-        $provider = Socialite::driver('google');
-
-        return $provider->stateless()->redirect();
+        return Socialite::driver('google')->redirect();
     }
 
     /**
@@ -29,10 +25,7 @@ class GoogleAuthController extends Controller
      */
     public function callback(): JsonResponse|RedirectResponse
     {
-        /** @var GoogleProvider $provider */
-        $provider = Socialite::driver('google');
-
-        $googleUser = $provider->stateless()->user();
+        $googleUser = Socialite::driver('google')->user();
 
         $user = User::where('google_id', $googleUser->id)->first();
 
@@ -44,24 +37,33 @@ class GoogleAuthController extends Controller
             ]);
 
             Auth::login($user);
+            session()->regenerate();
+            session()->save();
 
-            return response()->json([
-                'message' => 'Successfully signed in with Google.',
-                'user' => $user,
-            ]);
+            return redirect(env('FRONTEND_URL', ''));
         }
 
-        // User doesn't exist. Ask frontend to complete sign up (provide username)
-        return response()->json([
-            'message' => 'User not found. Please complete registration by providing a username.',
-            'action' => 'register',
-            'google_user' => [
+        // User doesn't exist. Store Google info in session and prompt for username to complete registration.
+        session([
+            'pending_user' => [
                 'google_id' => $googleUser->id,
                 'name' => $googleUser->name,
                 'email' => $googleUser->email,
                 'avatar' => $googleUser->avatar,
             ],
         ]);
+
+        return redirect(env('FRONTEND_URL', '').env('FRONTEND_REGISTER_PATH', ''));
+    }
+
+    public function getPendingUser()
+    {
+        $data = session('pending_user');
+        if (! $data) {
+            return response()->json(['error' => 'No pending registration'], 404);
+        }
+
+        return response()->json($data);
     }
 
     /**
@@ -70,30 +72,31 @@ class GoogleAuthController extends Controller
     public function register(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'google_id' => ['required', 'string'],
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255'],
-            'avatar' => ['nullable', 'string', 'url'],
-            'username' => ['required', 'string', 'max:255', 'unique:users,username'],
+            'name' => ['string', 'max:255'],
+            'username' => ['required', 'string', 'max:30', 'unique:users,username', 'regex:/^[a-zA-Z0-9_]+$/'],
         ]);
 
-        if (User::where('google_id', $validated['google_id'])->exists()) {
-            return response()->json(['message' => 'User already registered.'], 400);
+        $pendingUser = session('pending_user');
+
+        if (! $pendingUser) {
+            return response()->json(['message' => 'No pending registration found for this Google account.'], 400);
         }
 
         $user = User::create([
-            'google_id' => $validated['google_id'],
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'avatar' => $validated['avatar'] ?? null,
+            'google_id' => $pendingUser['google_id'],
+            'email' => $pendingUser['email'],
+            'avatar' => $pendingUser['avatar'] ?? null,
+            'name' => $validated['name'], // User modified name from form input
             'username' => $validated['username'],
         ]);
 
+        session()->forget('pending_user');
         Auth::login($user);
+        session()->regenerate();
+        session()->save();
 
         return response()->json([
             'message' => 'Successfully registered and signed in.',
-            'user' => $user,
         ], 201);
     }
 }
