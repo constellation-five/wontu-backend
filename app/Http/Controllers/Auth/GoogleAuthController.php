@@ -73,7 +73,7 @@ class GoogleAuthController extends Controller
     {
         $validated = $request->validate([
             'name' => ['string', 'max:255'],
-            'username' => ['required', 'string', 'max:30', 'unique:users,username', 'regex:/^[a-zA-Z0-9_]+$/'],
+            'username' => ['required', 'string', 'max:30', 'unique:users,username', 'regex:/^[a-z0-9_\.]+$/'],
         ]);
 
         $pendingUser = session('pending_user');
