@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -41,5 +41,10 @@ class Offer extends Model
     public function paymentMethods(): BelongsToMany
     {
         return $this->belongsToMany(PaymentMethod::class, 'offer_payment_methods', 'offer_id', 'payment_method_id');
+    }
+
+    public function buyers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'offer_user', 'offer_id', 'user_id')->withTimestamps();
     }
 }

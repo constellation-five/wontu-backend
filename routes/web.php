@@ -1,8 +1,8 @@
 <?php
 
 use App\Http\Controllers\Auth\GoogleAuthController;
-use App\Http\Controllers\PaymentMethodController;
 use App\Http\Controllers\OfferController;
+use App\Http\Controllers\PaymentMethodController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -24,6 +24,7 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::post('/offers', [OfferController::class, 'store']);
+    Route::post('/offers/{offer}/join', [OfferController::class, 'join']);
 
     Route::post('/auth/logout', function (Request $request) {
         Auth::logout();
