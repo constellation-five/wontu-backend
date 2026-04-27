@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -31,9 +32,14 @@ class User extends Authenticatable
             //
         ];
     }
-    
+
     public function paymentMethods()
     {
         return $this->hasMany(PaymentMethod::class, 'user_id', 'user_id');
+    }
+
+    public function joinedOffers(): BelongsToMany
+    {
+        return $this->belongsToMany(Offer::class, 'offer_user', 'user_id', 'offer_id')->withTimestamps();
     }
 }
