@@ -39,7 +39,7 @@ class JoinOfferTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($offer->buyers()->where('user_id', $buyer->user_id)->exists());
+        $this->assertTrue($offer->buyers()->where('users.user_id', $buyer->user_id)->exists());
     }
 
     public function test_seller_cannot_join_their_own_offer(): void
@@ -62,7 +62,7 @@ class JoinOfferTest extends TestCase
             'message' => 'You cannot join your own offer.',
         ]);
 
-        $this->assertFalse($offer->buyers()->where('user_id', $seller->user_id)->exists());
+        $this->assertFalse($offer->buyers()->where('users.user_id', $seller->user_id)->exists());
     }
 
     public function test_user_cannot_join_same_offer_twice(): void
@@ -88,7 +88,7 @@ class JoinOfferTest extends TestCase
         $response->assertOk();
 
         // Verify user is only joined once
-        $this->assertEquals(1, $offer->buyers()->where('user_id', $buyer->user_id)->count());
+        $this->assertEquals(1, $offer->buyers()->where('users.user_id', $buyer->user_id)->count());
     }
 
     public function test_unauthenticated_user_cannot_join_offer(): void

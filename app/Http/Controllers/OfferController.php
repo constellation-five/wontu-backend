@@ -20,6 +20,7 @@ class OfferController extends Controller
             'closing_time' => $validated['closing_time'],
             'arrival_time' => $validated['arrival_time'],
             'has_cod_payment' => $validated['has_cod_payment'] ?? false,
+            'is_completed' => false,
         ]);
 
         if (! empty($validated['items'] ?? [])) {
@@ -45,7 +46,7 @@ class OfferController extends Controller
         }
 
         // Attach user to offer if not already joined
-        if ($offer->buyers()->wherePivot('user_id', $userId)->doesntExist()) {
+        if (!$offer->buyers()->where('users.user_id', $userId)->exists()) {
             $offer->buyers()->attach($userId);
         }
 

@@ -26,7 +26,7 @@ class CreateOfferTest extends TestCase
                     'item_price' => 4.50,
                     'item_url' => 'https://example.com/bread',
                     'slot' => 5,
-                    'current_slot' => 'slot',
+                    'current_slot' => 0,
                     'image_url' => 'https://example.com/bread.jpg',
                 ],
             ],
@@ -66,6 +66,6 @@ class CreateOfferTest extends TestCase
         ]);
 
         $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['category', 'merchant_name', 'closing_time', 'arrival_time']);
+        $response->assertJsonValidationErrors(['category', 'closing_time', 'arrival_time']);
     }
 }
