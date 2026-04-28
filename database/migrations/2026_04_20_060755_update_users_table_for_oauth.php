@@ -12,7 +12,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement('SET SESSION sql_generate_invisible_primary_key = OFF');
+        $gipk = collect(DB::select("SHOW VARIABLES LIKE 'sql_generate_invisible_primary_key'"))->isNotEmpty();
+
+        if ($gipk) {
+            DB::statement('SET SESSION sql_generate_invisible_primary_key = OFF');
+        }
 
         Schema::table('users', function (Blueprint $table) {
             $table->bigInteger('id')->change();
@@ -26,7 +30,9 @@ return new class extends Migration
             $table->dropColumn(['id', 'email_verified_at', 'password']);
         });
 
-        DB::statement('SET SESSION sql_generate_invisible_primary_key = ON');
+        if ($gipk) {
+            DB::statement('SET SESSION sql_generate_invisible_primary_key = ON');
+        }
     }
 
     /**
@@ -34,7 +40,11 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement('SET SESSION sql_generate_invisible_primary_key = OFF');
+        $gipk = collect(DB::select("SHOW VARIABLES LIKE 'sql_generate_invisible_primary_key'"))->isNotEmpty();
+
+        if ($gipk) {
+            DB::statement('SET SESSION sql_generate_invisible_primary_key = OFF');
+        }
 
         Schema::table('users', function (Blueprint $table) {
             $table->dropPrimary(['user_id']);
@@ -45,6 +55,8 @@ return new class extends Migration
             $table->string('password')->nullable();
         });
 
-        DB::statement('SET SESSION sql_generate_invisible_primary_key = ON');
+        if ($gipk) {
+            DB::statement('SET SESSION sql_generate_invisible_primary_key = ON');
+        }
     }
 };
