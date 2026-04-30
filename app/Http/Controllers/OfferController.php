@@ -6,9 +6,32 @@ use App\Http\Requests\JoinOfferRequest;
 use App\Http\Requests\StoreOfferRequest;
 use App\Models\Offer;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class OfferController extends Controller
 {
+    public function index(Request $request): JsonResponse
+    {
+        $search = $request->query('search');
+
+        $offers = Offer::with(['items'])
+            ->when($search, function ($query, $search) {
+                return $query->where(function ($q) use ($search) {
+                    $q->where('merchant_name', 'LIKE', "%{$search}%")
+                    ->orWhereHas('items', function ($itemQuery) use ($search) {
+                        $itemQuery->where('item_name', 'LIKE', "%{$search}%");
+                    });
+                });
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $offers
+        ], 200);
+    }
+
     public function store(StoreOfferRequest $request): JsonResponse
     {
         $validated = $request->validated();
