@@ -21,12 +21,13 @@ class Offer extends Model
     protected function casts(): array
     {
         return [
-            'closing_time' => 'datetime',
-            'arrival_time' => 'datetime',
+            'closing_time' => 'datetime:Y-m-d H:i:s',
+            'arrival_time' => 'datetime:Y-m-d H:i:s',
             'has_cod_payment' => 'boolean',
             'is_completed' => 'boolean',
         ];
     }
+    
 
     public function seller(): BelongsTo
     {
