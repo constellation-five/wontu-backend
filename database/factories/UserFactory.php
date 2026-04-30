@@ -4,7 +4,7 @@ namespace Database\Factories;
 
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Str;
+// use Illuminate\Support\Str;
 
 /**
  * @extends Factory<User>
@@ -29,7 +29,7 @@ class UserFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'google_id' => fake()->unique()->numerify('#####################'),
             'avatar' => fake()->imageUrl(),
-            'remember_token' => Str::random(10),
+            // 'remember_token' => Str::random(10),
         ];
     }
 

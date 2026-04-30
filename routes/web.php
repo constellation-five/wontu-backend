@@ -25,6 +25,7 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/offers', [OfferController::class, 'store']);
     Route::post('/offers/{offer}/join', [OfferController::class, 'join']);
+    Route::get('/offers', [OfferController::class, 'index']);
 
     Route::post('/auth/logout', function (Request $request) {
         Auth::logout();
