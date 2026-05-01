@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Offer;
+use App\Models\User;
 use App\Http\Requests\JoinOfferRequest;
 use App\Http\Requests\StoreOfferRequest;
-use App\Models\Offer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -61,15 +62,13 @@ class OfferController extends Controller
         $user = $request->user();
         $userId = $user->user_id;
 
-        // Check if user is the seller
         if ($offer->seller_id === $userId) {
             return response()->json([
                 'message' => 'You cannot join your own offer.',
             ], 403);
         }
 
-        // Attach user to offer if not already joined
-        if (!$offer->buyers()->where('users.user_id', $userId)->exists()) {
+        if (! $offer->buyers()->where('users.user_id', $userId)->exists()) {
             $offer->buyers()->attach($userId);
         }
 
@@ -78,4 +77,5 @@ class OfferController extends Controller
             'offer' => $offer->load('items', 'buyers'),
         ], 200);
     }
+
 }

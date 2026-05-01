@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Offer;
+use App\Models\OrderItem;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -89,6 +90,57 @@ class JoinOfferTest extends TestCase
 
         // Verify user is only joined once
         $this->assertEquals(1, $offer->buyers()->where('users.user_id', $buyer->user_id)->count());
+    }
+
+    public function test_submit_order_saves_order_items_and_pivot_metadata(): void
+    {
+        $seller = User::factory()->create();
+        $buyer = User::factory()->create();
+
+        $offer = Offer::create([
+            'seller_id' => $seller->user_id,
+            'category' => 'food',
+            'merchant_name' => 'Local Market',
+            'closing_time' => now()->addHours(2),
+            'arrival_time' => now()->addHours(3),
+            'has_cod_payment' => true,
+        ]);
+
+        $payload = [
+            'notes' => 'Please add extra cheese',
+            'payment_proof_url' => 'https://example.com/proof.png',
+            'items' => [
+                [
+                    'item_name' => 'Martabak Keju',
+                    'item_price' => 25000.00,
+                    'quantity' => 2,
+                    'notes' => 'Less sweet',
+                ],
+            ],
+        ];
+
+        $response = $this->actingAs($buyer, 'sanctum')
+            ->postJson("/offers/{$offer->offer_id}/orders", $payload);
+
+        $response->assertStatus(201);
+
+        $this->assertDatabaseHas('offer_user', [
+            'offer_id' => $offer->offer_id,
+            'user_id' => $buyer->user_id,
+            'status' => 'pending',
+            'notes' => 'Please add extra cheese',
+            'payment_proof_url' => 'https://example.com/proof.png',
+            'total_amount' => 50000.00,
+        ]);
+
+        $this->assertDatabaseHas('order_items', [
+            'offer_id' => $offer->offer_id,
+            'user_id' => $buyer->user_id,
+            'item_name' => 'Martabak Keju',
+            'item_price' => 25000.00,
+            'quantity' => 2,
+            'notes' => 'Less sweet',
+        ]);
     }
 
     public function test_unauthenticated_user_cannot_join_offer(): void
