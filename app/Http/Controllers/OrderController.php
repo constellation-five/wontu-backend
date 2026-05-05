@@ -89,6 +89,7 @@ class OrderController extends Controller
             ->get();
 
         return response()->json([
+            'order_id' => $offer->offer_id,
             'customer' => [
                 'name' => $buyer->name,
                 'email' => $buyer->email,
@@ -97,16 +98,16 @@ class OrderController extends Controller
             'order' => [
                 'status' => $pivot->status ?? 'pending',
                 'notes' => $pivot->notes ?? '',
-                'total_amount' => $pivot->total_amount ?? 0,
+                'total_amount' => (float)($pivot->total_amount ?? 0),
                 'payment_proof_url' => $pivot->payment_proof_url ?? null,
             ],
             'items' => $buyerOrderItems->map(function ($orderItem) {
                 return [
+                    'item_id' => $orderItem->order_item_id,
                     'item_name' => $orderItem->item_name,
-                    'item_price' => $orderItem->item_price,
+                    'item_price' => (float)$orderItem->item_price,
                     'quantity' => $orderItem->quantity,
-                    'subtotal' => $orderItem->item_price * $orderItem->quantity,
-                    'item_notes' => $orderItem->notes,
+                    'notes' => $orderItem->notes,
                 ];
             }),
         ], 200);
