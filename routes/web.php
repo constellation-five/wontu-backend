@@ -30,7 +30,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/offers', [OfferController::class, 'index']);
 
     // Order detail
-    Route::get('/seller/offers/{offer}/buyers/{buyer}', [OrderController::class, 'showOrderDetails']);
+    Route::get('/offers/{offer}/my-order', [OrderController::class, 'showMyOrder']);
+    Route::get('/offers/{offerId}/buyers/{buyerId}', [OrderController::class, 'showCustomerOrder']);
+    
+    Route::post('/offers/{offerId}/buyers/{buyerId}/confirm', [OrderController::class, 'confirmPayment']);
 
     Route::post('/auth/logout', function (Request $request) {
         Auth::logout();

@@ -8,6 +8,7 @@ use App\Models\OrderItem;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
@@ -66,27 +67,89 @@ class OrderController extends Controller
         ], 201);
     }
 
-    public function showOrderDetails(Request $request, Offer $offer, User $buyer): JsonResponse
+    // Buyer pov
+   public function showMyOrder(Request $request, $offerId): JsonResponse
     {
-        $user = $request->user();
+        $user = $request->user(); 
 
-        if ($offer->seller_id !== $user->user_id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
-        $buyerOrder = $offer->buyers()
-            ->where('users.user_id', $buyer->user_id)
+        $offerBuyer = DB::table('offer_buyers')
+            ->where('offer_id', $offerId)
+            ->where('buyer_id', $user->user_id)
             ->first();
 
-        if (! $buyerOrder) {
+        if (! $offerBuyer) {
             return response()->json(['message' => 'Order not found'], 404);
         }
 
-        $pivot = $buyerOrder->pivot;
-
-        $buyerOrderItems = OrderItem::where('offer_id', $offer->offer_id)
-            ->where('user_id', $buyer->user_id)
+        $buyerItems = DB::table('buyer_items')
+            ->join('items', 'buyer_items.item_id', '=', 'items.item_id')
+            ->where('buyer_items.offer_buyer_id', $offerBuyer->offer_buyer_id)
+            ->select('items.item_id', 'items.item_name', 'items.item_price', 'buyer_items.quantity', 'buyer_items.notes', 'items.image_url')
             ->get();
+
+        $totalAmount = $buyerItems->sum(function ($item) {
+            return $item->item_price * $item->quantity;
+        });
+
+        return response()->json([
+            'order_id' => $offerId,
+            'customer' => [
+                'name' => $user->name,
+                'email' => $user->email,
+                'avatar' => $user->avatar,
+            ],
+            'order' => [
+                'status' => $offerBuyer->status,
+                'notes' => '', 
+                'total_amount' => (float)$totalAmount,
+                'payment_proof_url' => $offerBuyer->payment_proof_url,
+            ],
+            'items' => $buyerItems->map(function ($item) {
+                return [
+                    'item_id' => $item->item_id,
+                    'item_name' => $item->item_name,
+                    'item_price' => (float)$item->item_price,
+                    'quantity' => $item->quantity,
+                    'notes' => $item->notes,
+                    'image' => $item->image_url,
+                ];
+            }),
+        ], 200);
+    }
+
+    // Seller pov
+    public function showCustomerOrder(Request $request, $offerId, string $buyerId): JsonResponse
+    {
+        $user = $request->user();
+
+        $offer = DB::table('offers')->where('offer_id', $offerId)->first();
+        if (!$offer) return response()->json(['message' => 'Offer not found'], 404);
+
+        $buyer = DB::table('users')->where('user_id', $buyerId)->first();
+        if (!$buyer) return response()->json(['message' => 'Buyer not found'], 404);
+
+        if ($offer->seller_id !== $user->user_id) {
+            return response()->json(['message' => 'Unauthorized. You do not own this offer.'], 403);
+        }
+
+        $offerBuyer = DB::table('offer_buyers')
+            ->where('offer_id', $offerId)
+            ->where('buyer_id', $buyerId)
+            ->first();
+
+        if (! $offerBuyer) {
+            return response()->json(['message' => 'Customer order not found'], 404);
+        }
+
+        $buyerItems = DB::table('buyer_items')
+            ->join('items', 'buyer_items.item_id', '=', 'items.item_id')
+            ->where('buyer_items.offer_buyer_id', $offerBuyer->offer_buyer_id)
+            ->select('items.item_id', 'items.item_name', 'items.item_price', 'buyer_items.quantity', 'buyer_items.notes', 'items.image_url')
+            ->get();
+
+        $totalAmount = $buyerItems->sum(function ($item) {
+            return $item->item_price * $item->quantity;
+        });
 
         return response()->json([
             'order_id' => $offer->offer_id,
@@ -96,20 +159,50 @@ class OrderController extends Controller
                 'avatar' => $buyer->avatar,
             ],
             'order' => [
-                'status' => $pivot->status ?? 'pending',
-                'notes' => $pivot->notes ?? '',
-                'total_amount' => (float)($pivot->total_amount ?? 0),
-                'payment_proof_url' => $pivot->payment_proof_url ?? null,
+                'status' => $offerBuyer->status,
+                'notes' => '', 
+                'total_amount' => (float)$totalAmount,
+                'payment_proof_url' => $offerBuyer->payment_proof_url,
             ],
-            'items' => $buyerOrderItems->map(function ($orderItem) {
+            'items' => $buyerItems->map(function ($item) {
                 return [
-                    'item_id' => $orderItem->order_item_id,
-                    'item_name' => $orderItem->item_name,
-                    'item_price' => (float)$orderItem->item_price,
-                    'quantity' => $orderItem->quantity,
-                    'notes' => $orderItem->notes,
+                    'item_id' => $item->item_id,
+                    'item_name' => $item->item_name,
+                    'item_price' => (float)$item->item_price,
+                    'quantity' => $item->quantity,
+                    'notes' => $item->notes,
+                    'image' => $item->image_url, 
                 ];
             }),
         ], 200);
+    }
+
+    public function confirmPayment(Request $request, $offerId, $buyerId): JsonResponse
+    {
+        $user = $request->user();
+
+        $offer = DB::table('offers')->where('offer_id', $offerId)->first();
+        
+        if (!$offer) {
+            return response()->json(['message' => 'Offer not found'], 404);
+        }
+
+        if ($offer->seller_id !== $user->user_id) {
+            return response()->json(['message' => 'Unauthorized. You cannot confirm this payment.'], 403);
+        }
+
+        $updatedRows = DB::table('offer_buyers')
+            ->where('offer_id', $offerId)
+            ->where('buyer_id', $buyerId)
+            ->update([
+                'status' => 'confirmed',
+                'updated_at' => now()
+            ]);
+
+        if ($updatedRows === 0) {
+            return response()->json(['message' => 'Customer order not found.'], 404);
+        }
+
+        return response()->json(['message' => 'Payment confirmed successfully!'], 200);
     }
 }
