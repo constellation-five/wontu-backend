@@ -15,10 +15,10 @@ return new class extends Migration
             $table->id('item_id');
             $table->unsignedBigInteger('offer_id')->constrained('offers', 'offer_id')->onDelete('cascade');
             $table->string('item_name', 64);
-            $table->decimal('item_price', 10, 2);
+            $table->decimal('item_price', 10, 3);
             $table->string('item_url', 256)->nullable();
             $table->integer('current_slot')->default(0);
-            $table->integer('slot');
+            $table->integer('slot')->default(0);
             $table->string('image_url', 256)->nullable();
             $table->timestamps();
         });

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\OfferController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PaymentMethodController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -25,7 +26,14 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/offers', [OfferController::class, 'store']);
     Route::post('/offers/{offer}/join', [OfferController::class, 'join']);
+    Route::post('/offers/{offer}/orders', [OrderController::class, 'submitOrder']);
     Route::get('/offers', [OfferController::class, 'index']);
+
+    // Order detail
+    Route::get('/offers/{offer}/my-order', [OrderController::class, 'showMyOrder']);
+    Route::get('/offers/{offerId}/buyers/{buyerId}', [OrderController::class, 'showCustomerOrder']);
+    
+    Route::post('/offers/{offerId}/buyers/{buyerId}/confirm', [OrderController::class, 'confirmPayment']);
 
     Route::post('/auth/logout', function (Request $request) {
         Auth::logout();

@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id('offer_id');
             $table->foreignUuid('seller_id')->constrained('users', 'user_id')->onDelete('cascade');
             $table->enum('category',['food', 'other']);
-            $table->string('merchant_name', 64);
+            $table->string('merchant_name', 64)->nullable();
             $table->dateTime('closing_time');
             $table->dateTime('arrival_time');
             $table->boolean('has_cod_payment')->default(false);

@@ -11,13 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('offer_user', function (Blueprint $table) {
+        Schema::create('offer_buyers', function (Blueprint $table) {
+            $table->id('offer_buyer_id');
             $table->unsignedBigInteger('offer_id');
-            $table->foreignUuid('user_id')->constrained('users', 'user_id')->onDelete('cascade');
             $table->foreign('offer_id')->references('offer_id')->on('offers')->onDelete('cascade');
+            $table->foreignUuid('buyer_id')->references('user_id')->on('users')->onDelete('cascade');
+            $table->boolean('is_verified')->default(false);
+            $table->enum('status', ['pending', 'confirmed', 'completed'])->default('pending');
+            $table->string('payment_proof_url', 256)->nullable();
             $table->timestamps();
-
-            $table->primary(['offer_id', 'user_id']);
         });
     }
 
@@ -26,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('offer_user');
+        Schema::dropIfExists('offer_buyers');
     }
 };

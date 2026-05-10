@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\OrderItem;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -46,6 +47,13 @@ class Offer extends Model
 
     public function buyers(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'offer_user', 'offer_id', 'user_id')->withTimestamps();
+        return $this->belongsToMany(User::class, 'offer_user', 'offer_id', 'user_id')
+            ->withPivot(['status', 'notes', 'total_amount', 'payment_proof_url'])
+            ->withTimestamps();
+    }
+
+    public function orderItems(): HasMany
+    {
+        return $this->hasMany(OrderItem::class, 'offer_id', 'offer_id');
     }
 }
