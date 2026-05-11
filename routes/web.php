@@ -25,7 +25,12 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/offers', [OfferController::class, 'store']);
     Route::post('/offers/{offer}/join', [OfferController::class, 'join']);
+    Route::post('/offers/{offer}/place-order', [OfferController::class, 'placeOrder']);
+    Route::post('/offers/{offer}/update-order', [OfferController::class, 'updateOrder']);
+    Route::post('/offers/{offer}/replace-order', [OfferController::class, 'replaceOrder']);
+    Route::post('/offers/{offer}/cancel-order', [OfferController::class, 'cancelOrder']);
     Route::get('/offers', [OfferController::class, 'index']);
+    Route::get('/offers/{offer}', [OfferController::class, 'show']);
 
     Route::post('/auth/logout', function (Request $request) {
         Auth::logout();
@@ -41,4 +46,5 @@ Route::middleware('auth')->group(function () {
     Route::post('/payment-methods', [PaymentMethodController::class, 'store']);
     Route::put('/payment-methods/{id}', [PaymentMethodController::class, 'update']);
     Route::delete('/payment-methods/{id}', [PaymentMethodController::class, 'destroy']);
+    Route::get('/test-detail/{offer}', [OfferController::class, 'show']);
 });
