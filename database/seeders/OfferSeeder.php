@@ -11,17 +11,15 @@ class OfferSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. Buat user dummy sebagai seller jika belum ada
         $seller = User::first() ?? User::create([
             'user_id' => (string) Str::uuid(),
             'name' => 'Wontu Seller',
             'username' => 'wontuseller',
             'email' => 'seller@wontu.com',
             'google_id' => '123456789',
-            'avatar' => 'https://res.cloudinary.com/ditdykukf/image/upload/v1777530871/martabak-manis_umffen.jpg',
+            'avatar' => 'https://res.cloudinary.com/ditdykukf/image/upload/v1769437538/main-sample.png',
         ]);
 
-        // --- OFFER 1: MARTABAK ---
         $offer1 = Offer::create([
             'seller_id' => $seller->user_id,
             'category' => 'food',
@@ -46,10 +44,23 @@ class OfferSeeder extends Seeder
                 'slot' => 5,
                 'current_slot' => 1,
                 'image_url' => 'https://res.cloudinary.com/ditdykukf/image/upload/v1777538246/Screenshot_2026-04-30_153646_fabyul.png',
+            ],
+            [
+                'item_name' => 'Martabak Manis Cokelat Kacang',
+                'item_price' => 22000.00,
+                'slot' => 8,
+                'current_slot' => 2,
+                'image_url' => 'https://res.cloudinary.com/ditdykukf/image/upload/v1777538246/Screenshot_2026-04-30_153544_x3lclh.png',
+            ],
+            [
+                'item_name' => 'Martabak Tipker (Tipis Kering)',
+                'item_price' => 18000.00,
+                'slot' => 12,
+                'current_slot' => 0,
+                'image_url' => 'https://res.cloudinary.com/ditdykukf/image/upload/v1777538246/Screenshot_2026-04-30_153544_x3lclh.png',
             ]
         ]);
 
-        // --- OFFER 2: Teazzi ---
         $offer2 = Offer::create([
             'seller_id' => $seller->user_id,
             'category' => 'food',
@@ -68,7 +79,6 @@ class OfferSeeder extends Seeder
             'image_url' => 'https://res.cloudinary.com/ditdykukf/image/upload/v1777538313/Screenshot_2026-04-30_153820_prneqm.png',
         ]);
 
-        // --- OFFER 3: LAUNDRY / OTHER (Untuk test filter kategori) ---
         $offer3 = Offer::create([
             'seller_id' => $seller->user_id,
             'category' => 'other',
