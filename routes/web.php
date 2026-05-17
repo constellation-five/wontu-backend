@@ -18,6 +18,8 @@ Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback']);
 Route::get('/auth/google/pending-user', [GoogleAuthController::class, 'getPendingUser']);
 Route::post('/auth/google/register', [GoogleAuthController::class, 'register']);
 
+Route::get('/offers', [OfferController::class, 'index']);
+
 Route::middleware('auth')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
@@ -29,7 +31,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/offers/{offer}/update-order', [OfferController::class, 'updateOrder']);
     Route::post('/offers/{offer}/replace-order', [OfferController::class, 'replaceOrder']);
     Route::post('/offers/{offer}/cancel-order', [OfferController::class, 'cancelOrder']);
-    Route::get('/offers', [OfferController::class, 'index']);
     Route::get('/offers/{offer}', [OfferController::class, 'show']);
 
     Route::post('/auth/logout', function (Request $request) {
