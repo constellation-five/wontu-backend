@@ -61,7 +61,7 @@ class OfferController extends Controller
     {
         $search = $request->query('search');
 
-        $offers = Offer::with(['items'])
+        $offers = Offer::with(['items', 'seller'])
             ->when($search, function ($query, $search) {
                 return $query->where(function ($q) use ($search) {
                     $q->where('merchant_name', 'LIKE', "%{$search}%")
@@ -107,6 +107,17 @@ class OfferController extends Controller
         $offer->load(['items', 'seller']);
 
         return response()->json($offer);
+    }
+
+    public function getPaymentMethods(Offer $offer): JsonResponse
+    {
+        // Get payment methods of the offer's seller
+        $paymentMethods = $offer->seller->paymentMethods()->get();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $paymentMethods
+        ], 200);
     }
 
     public function placeOrder(Request $request, Offer $offer): JsonResponse

@@ -22,7 +22,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
-
+    // Offers Routes
     Route::post('/offers', [OfferController::class, 'store']);
     Route::post('/offers/{offer}/join', [OfferController::class, 'join']);
     Route::post('/offers/{offer}/place-order', [OfferController::class, 'placeOrder']);
@@ -31,6 +31,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/offers/{offer}/cancel-order', [OfferController::class, 'cancelOrder']);
     Route::get('/offers', [OfferController::class, 'index']);
     Route::get('/offers/{offer}', [OfferController::class, 'show']);
+    Route::get('/offers/{offer}/payment-methods', [OfferController::class, 'getPaymentMethods']);
 
     Route::post('/auth/logout', function (Request $request) {
         Auth::logout();
