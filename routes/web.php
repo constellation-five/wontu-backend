@@ -5,6 +5,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OfferController;
 use App\Http\Controllers\PaymentMethodController;
 use App\Http\Controllers\RequestController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -63,6 +64,7 @@ Route::middleware('auth')->group(function () {
     Route::put('/requests/{id}', [RequestController::class, 'update']);
     Route::delete('/requests/{id}', [RequestController::class, 'destroy']);
     Route::post('/requests/{id}/vote', [RequestController::class, 'toggleVote']);
+    
     // Notification Routes
     Route::prefix('notifications')->group(function (): void {
         Route::get('/', [NotificationController::class, 'index']);
@@ -72,4 +74,15 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{id}', [NotificationController::class, 'destroy']);
         Route::delete('/', [NotificationController::class, 'destroyAll']);
     });
+
+    // Profile Routes
+    Route::put('/profile', [ProfileController::class, 'updateProfile']);
+    Route::get('/profile/personal-info', [ProfileController::class, 'personalInfo']);
+    Route::get('/profile/{userId}', [ProfileController::class, 'show']);
+    Route::post('/profile/{userId}/follow', [ProfileController::class, 'follow']);
+    Route::delete('/profile/{userId}/unfollow', [ProfileController::class, 'unfollow']);
+    Route::get('/profile/{userId}/followers', [ProfileController::class, 'followers']);
+    Route::get('/profile/{userId}/following', [ProfileController::class, 'following']);
+    Route::get('/profile/{userId}/rating-breakdown', [ProfileController::class, 'ratingBreakdown']);
+    Route::post('/profile/{userId}/rating', [ProfileController::class, 'addRating']);
 });
