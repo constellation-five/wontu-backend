@@ -29,19 +29,25 @@ class ProfileController extends Controller
             ? $currentUser->following()->where('following_id', $userId)->exists()
             : false;
 
+        // Check if the viewed user is following back the current user
+        $isFollowingBack = $currentUser
+            ? $user->following()->where('following_id', $currentUser->user_id)->exists()
+            : false;
+
         return response()->json([
             'success' => true,
             'message' => 'User profile retrieved successfully',
             'data'    => [
-                'user_id'         => $user->user_id,
-                'username'        => $user->username,
-                'name'            => $user->name,
-                'avatar'          => $user->avatar,
-                'followers_count' => $user->followers_count,
-                'following_count' => $user->following_count,
-                'average_rating'  => round($user->received_ratings_avg_rating ?? 0, 2),
-                'total_ratings'   => $user->received_ratings_count,
-                'is_following'    => $isFollowing,
+                'user_id'           => $user->user_id,
+                'username'          => $user->username,
+                'name'              => $user->name,
+                'avatar'            => $user->avatar,
+                'followers_count'   => $user->followers_count,
+                'following_count'   => $user->following_count,
+                'average_rating'    => round($user->received_ratings_avg_rating ?? 0, 2),
+                'total_ratings'     => $user->received_ratings_count,
+                'is_following'      => $isFollowing,
+                'is_following_back' => $isFollowingBack,
             ]
         ], 200);
     }
