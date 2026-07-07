@@ -46,6 +46,13 @@ class Offer extends Model
 
     public function buyers(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'offer_user', 'offer_id', 'user_id')->withTimestamps();
+        return $this->belongsToMany(User::class, 'offer_buyers', 'offer_id', 'buyer_id')
+            ->withPivot(['offer_buyer_id', 'is_verified', 'payment_proof_url', 'status'])
+            ->withTimestamps();
+    }
+
+    public function offerBuyers(): HasMany
+    {
+        return $this->hasMany(OfferBuyer::class, 'offer_id', 'offer_id');
     }
 }

@@ -29,6 +29,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/offers/{offer}/update-order', [OfferController::class, 'updateOrder']);
     Route::post('/offers/{offer}/replace-order', [OfferController::class, 'replaceOrder']);
     Route::post('/offers/{offer}/cancel-order', [OfferController::class, 'cancelOrder']);
+    Route::get('/offers/{offer}/my-order', [OfferController::class, 'myOrder']);
+    Route::get('/my-orders', [OfferController::class, 'myOrders']);
     Route::get('/offers', [OfferController::class, 'index']);
     Route::get('/offers/{offer}', [OfferController::class, 'show']);
     Route::get('/offers/{offer}/payment-methods', [OfferController::class, 'getPaymentMethods']);

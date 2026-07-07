@@ -11,7 +11,7 @@ class OfferSeeder extends Seeder
 {
     public function run(): void
     {
-        $seller = User::first() ?? User::create([
+        $seller = User::create([
             'user_id' => (string) Str::uuid(),
             'name' => 'Wontu Seller',
             'username' => 'wontuseller',
