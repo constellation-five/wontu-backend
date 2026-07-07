@@ -341,11 +341,12 @@ class ProfileController extends Controller
             'success' => true,
             'message' => 'Profile updated successfully',
             'data'    => [
-                'user_id'  => $currentUser->user_id,
-                'username' => $currentUser->username,
-                'name'     => $currentUser->name,
-                'email'    => $currentUser->email,
-                'avatar'   => $currentUser->avatar,
+                'user_id'    => $currentUser->user_id,
+                'username'   => $currentUser->username,
+                'name'       => $currentUser->name,
+                'email'      => $currentUser->email,
+                'avatar'     => $currentUser->avatar,
+                'created_at' => $currentUser->created_at->format('F j, Y, g:i A'),
             ]
         ], 200);
     }
