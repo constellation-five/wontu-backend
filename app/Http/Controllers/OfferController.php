@@ -130,6 +130,9 @@ class OfferController extends Controller
                 'status' => $offerBuyer->status,
                 'is_verified' => $offerBuyer->is_verified,
                 'payment_proof_url' => $offerBuyer->payment_proof_url,
+                'joined_at' => $offerBuyer->created_at,
+                'payment_submitted_at' => $offerBuyer->payment_submitted_at,
+                'verified_at' => $offerBuyer->verified_at,
                 'created_at' => $offerBuyer->created_at,
                 'items' => $offerBuyer->items->map(fn ($buyerItem) => [
                     'item' => $buyerItem->item,
@@ -165,12 +168,104 @@ class OfferController extends Controller
                 'status' => $offerBuyer->status,
                 'is_verified' => $offerBuyer->is_verified,
                 'payment_proof_url' => $offerBuyer->payment_proof_url,
+                'joined_at' => $offerBuyer->created_at,
+                'payment_submitted_at' => $offerBuyer->payment_submitted_at,
+                'verified_at' => $offerBuyer->verified_at,
                 'items' => $offerBuyer->items->map(fn ($buyerItem) => [
                     'item' => $buyerItem->item,
                     'quantity' => $buyerItem->quantity,
                     'notes' => $buyerItem->notes,
                 ]),
             ],
+        ], 200);
+    }
+
+    /**
+     * Seller marks the offer as actually closed (distinct from closing_time,
+     * which is just the planned schedule).
+     */
+    public function close(Request $request, Offer $offer): JsonResponse
+    {
+        if ($offer->seller_id !== $request->user()->user_id) {
+            return response()->json([
+                'message' => 'Hanya penjual yang bisa menutup offer ini.',
+            ], 403);
+        }
+
+        if ($offer->closed_at) {
+            return response()->json([
+                'message' => 'Offer sudah ditutup.',
+            ], 409);
+        }
+
+        $offer->closed_at = now();
+        $offer->save();
+
+        return response()->json([
+            'message' => 'Offer berhasil ditutup.',
+            'offer' => $offer->fresh(),
+        ], 200);
+    }
+
+    /**
+     * Seller marks the offer's items as actually arrived (distinct from
+     * arrival_time, which is just the planned schedule).
+     */
+    public function markArrived(Request $request, Offer $offer): JsonResponse
+    {
+        if ($offer->seller_id !== $request->user()->user_id) {
+            return response()->json([
+                'message' => 'Hanya penjual yang bisa menandai offer ini sebagai tiba.',
+            ], 403);
+        }
+
+        if ($offer->arrived_at) {
+            return response()->json([
+                'message' => 'Offer sudah ditandai sebagai tiba.',
+            ], 409);
+        }
+
+        $offer->arrived_at = now();
+        $offer->save();
+
+        return response()->json([
+            'message' => 'Offer berhasil ditandai sebagai tiba.',
+            'offer' => $offer->fresh(),
+        ], 200);
+    }
+
+    /**
+     * Records that the buyer submitted proof of payment for their order.
+     * The actual file upload is handled elsewhere; this just records the
+     * moment submission happened (and stores the resulting URL, once that
+     * upload feature exists to provide one).
+     */
+    public function submitPayment(Request $request, Offer $offer): JsonResponse
+    {
+        $userId = $request->user()->user_id;
+        $validated = $request->validate([
+            'payment_proof_url' => 'nullable|string|max:256',
+        ]);
+
+        $offerBuyer = OfferBuyer::where('offer_id', $offer->offer_id)
+            ->where('buyer_id', $userId)
+            ->first();
+
+        if (! $offerBuyer) {
+            return response()->json([
+                'message' => 'Anda tidak memiliki pesanan di offer ini.',
+            ], 404);
+        }
+
+        $offerBuyer->payment_submitted_at = now();
+        if (! empty($validated['payment_proof_url'])) {
+            $offerBuyer->payment_proof_url = $validated['payment_proof_url'];
+        }
+        $offerBuyer->save();
+
+        return response()->json([
+            'message' => 'Bukti pembayaran berhasil dikirim.',
+            'offer_buyer' => $offerBuyer->fresh(),
         ], 200);
     }
 

@@ -23,6 +23,8 @@ class Offer extends Model
         return [
             'closing_time' => 'datetime:Y-m-d H:i:s',
             'arrival_time' => 'datetime:Y-m-d H:i:s',
+            'closed_at' => 'datetime:Y-m-d H:i:s',
+            'arrived_at' => 'datetime:Y-m-d H:i:s',
             'has_cod_payment' => 'boolean',
             'is_completed' => 'boolean',
         ];
@@ -47,7 +49,7 @@ class Offer extends Model
     public function buyers(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'offer_buyers', 'offer_id', 'buyer_id')
-            ->withPivot(['offer_buyer_id', 'is_verified', 'payment_proof_url', 'status'])
+            ->withPivot(['offer_buyer_id', 'is_verified', 'payment_proof_url', 'payment_submitted_at', 'verified_at', 'status'])
             ->withTimestamps();
     }
 
