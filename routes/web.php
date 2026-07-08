@@ -18,6 +18,8 @@ Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback']);
 Route::get('/auth/google/pending-user', [GoogleAuthController::class, 'getPendingUser']);
 Route::post('/auth/google/register', [GoogleAuthController::class, 'register']);
 
+Route::get('/offers', [OfferController::class, 'index']);
+
 Route::middleware('auth')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
