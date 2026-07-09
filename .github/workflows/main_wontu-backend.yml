@@ -52,7 +52,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: php-app
-      
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -79,13 +79,36 @@ jobs:
           scm_user=$(echo "$creds" | jq -r .user)
           scm_pass=$(echo "$creds" | jq -r .pass)
 
+          # Azure now assigns a random-suffixed default hostname per app
+          # instead of the flat <app-name>.azurewebsites.net pattern, so the SCM/Kudu
+          # host is resolved dynamically rather than hardcoded — it's the same
+          # hostname with "scm." inserted before the first dot.
+          default_host=$(az webapp show \
+            --name wontu-backend \
+            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+            --query defaultHostName -o tsv)
+          scm_host="${default_host/./.scm.}"
+
           # Kudu's SCM site restarts alongside the app on deploy, so give it a
           # few retries to come back up before assuming migrations failed.
+          # `set -e` would otherwise abort on curl's own exit code (e.g. a transient
+          # DNS/connect failure) before the loop gets a chance to retry, so curl
+          # failures are captured explicitly here instead of letting `set -e` fire.
           for attempt in 1 2 3 4 5; do
+            set +e
             response=$(curl -s -w '\n%{http_code}' -u "$scm_user:$scm_pass" \
-              -X POST "https://wontu-backend.scm.azurewebsites.net/api/command" \
+              -X POST "https://${scm_host}/api/command" \
               -H "Content-Type: application/json" \
               -d '{"command":"php artisan migrate --force","dir":"site/wwwroot"}')
+            curl_exit=$?
+            set -e
+
+            if [ "$curl_exit" -ne 0 ]; then
+              echo "curl failed (attempt $attempt, curl exit $curl_exit), retrying in 10s..."
+              sleep 10
+              continue
+            fi
+
             status="${response##*$'\n'}"
             body="${response%$'\n'*}"
 
@@ -101,4 +124,3 @@ jobs:
 
           echo "Migration command did not succeed after 5 attempts."
           exit 1
-          
