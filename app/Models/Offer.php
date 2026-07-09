@@ -3,15 +3,22 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Query\Expression;
+use Illuminate\Support\Facades\DB;
 
-#[Fillable(['seller_id', 'category', 'merchant_name', 'closing_time', 'arrival_time', 'has_cod_payment', 'is_completed'])]
+#[Fillable(['seller_id', 'category', 'merchant_name', 'location_label', 'location', 'closing_time', 'arrival_time', 'has_cod_payment', 'is_completed'])]
 class Offer extends Model
 {
     protected $primaryKey = 'offer_id';
+
+    // Raw binary (WKB); always read/write through makePoint()/scopeWithCoordinates()
+    // instead, which expose it as plain latitude/longitude floats.
+    protected $hidden = ['location'];
 
     /**
      * Get the attributes that should be cast.
@@ -27,9 +34,39 @@ class Offer extends Model
             'arrived_at' => 'datetime:Y-m-d H:i:s',
             'has_cod_payment' => 'boolean',
             'is_completed' => 'boolean',
+            'latitude' => 'float',
+            'longitude' => 'float',
         ];
     }
-    
+
+    /**
+     * Build the raw SQL expression for a `location` POINT(lng, lat) SRID 4326 value.
+     *
+     * MySQL 8's default axis order for SRID 4326 text is lat/long, which is the
+     * opposite of this app's lng/lat convention (LatLngLiteral, GeoJSON) — pinning
+     * 'axis-order=long-lat' keeps WKT input as POINT(lng lat) everywhere, and in turn
+     * makes ST_X()/ST_Y() below come back as lat/long consistently (verified empirically).
+     */
+    public static function makePoint(float $lat, float $lng): Expression
+    {
+        return DB::raw(sprintf(
+            "ST_GeomFromText('POINT(%F %F)', 4326, 'axis-order=long-lat')",
+            $lng,
+            $lat,
+        ));
+    }
+
+    /**
+     * Select latitude/longitude out of the `location` point as plain floats.
+     */
+    public function scopeWithCoordinates(Builder $query): Builder
+    {
+        return $query->addSelect([
+            $query->qualifyColumn('*'),
+            DB::raw('ST_X('.$query->qualifyColumn('location').') as latitude'),
+            DB::raw('ST_Y('.$query->qualifyColumn('location').') as longitude'),
+        ]);
+    }
 
     public function seller(): BelongsTo
     {

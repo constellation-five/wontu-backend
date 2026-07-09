@@ -63,6 +63,7 @@ class OfferController extends Controller
         $search = $request->query('search');
 
         $offers = Offer::with(['items', 'seller'])
+            ->withCoordinates()
             ->when($search, function ($query, $search) {
                 return $query->where(function ($q) use ($search) {
                     $q->where('merchant_name', 'LIKE', "%{$search}%")
@@ -88,6 +89,8 @@ class OfferController extends Controller
             'seller_id' => $request->user()->user_id,
             'category' => $validated['category'],
             'merchant_name' => $validated['merchant_name'] ?? '',
+            'location_label' => $validated['location_label'] ?? null,
+            'location' => Offer::makePoint($validated['location_lat'], $validated['location_lng']),
             'closing_time' => $validated['closing_time'],
             'arrival_time' => $validated['arrival_time'],
             'has_cod_payment' => $validated['has_cod_payment'] ?? false,
@@ -105,7 +108,7 @@ class OfferController extends Controller
     }
 
     public function show(Offer $offer) {
-        $offer->load(['items', 'seller']);
+        $offer = Offer::withCoordinates()->with(['items', 'seller'])->findOrFail($offer->offer_id);
 
         return response()->json($offer);
     }
