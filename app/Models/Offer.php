@@ -68,6 +68,24 @@ class Offer extends Model
         ]);
     }
 
+    /**
+     * Restrict to offers within $radiusMeters (great-circle, via ST_Distance_Sphere)
+     * of ($lat, $lng).
+     *
+     * ST_Distance_Sphere always treats its POINT args as (longitude, latitude),
+     * ignoring SRID axis order — so `location` (stored X=lat, Y=lng, see makePoint())
+     * has to be re-packed as POINT(lng, lat) here rather than passed straight through.
+     */
+    public function scopeNearby(Builder $query, float $lat, float $lng, float $radiusMeters): Builder
+    {
+        $column = $query->qualifyColumn('location');
+
+        return $query->whereRaw(
+            "ST_Distance_Sphere(POINT(ST_Y({$column}), ST_X({$column})), POINT(?, ?)) <= ?",
+            [$lng, $lat, $radiusMeters],
+        );
+    }
+
     public function seller(): BelongsTo
     {
         return $this->belongsTo(User::class, 'seller_id', 'user_id');
