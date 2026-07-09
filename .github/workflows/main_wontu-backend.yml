@@ -67,4 +67,38 @@ jobs:
           app-name: 'wontu-backend'
           slot-name: 'Production'
           package: .
+
+      - name: Run database migrations
+        run: |
+          set -euo pipefail
+
+          creds=$(az webapp deployment list-publishing-credentials \
+            --name wontu-backend \
+            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+            --query "{user:publishingUserName,pass:publishingPassword}" -o json)
+          scm_user=$(echo "$creds" | jq -r .user)
+          scm_pass=$(echo "$creds" | jq -r .pass)
+
+          # Kudu's SCM site restarts alongside the app on deploy, so give it a
+          # few retries to come back up before assuming migrations failed.
+          for attempt in 1 2 3 4 5; do
+            response=$(curl -s -w '\n%{http_code}' -u "$scm_user:$scm_pass" \
+              -X POST "https://wontu-backend.scm.azurewebsites.net/api/command" \
+              -H "Content-Type: application/json" \
+              -d '{"command":"php artisan migrate --force","dir":"site/wwwroot"}')
+            status="${response##*$'\n'}"
+            body="${response%$'\n'*}"
+
+            if [ "$status" = "200" ]; then
+              echo "$body"
+              exit 0
+            fi
+
+            echo "Migration command failed (attempt $attempt, HTTP $status), retrying in 10s..."
+            echo "$body"
+            sleep 10
+          done
+
+          echo "Migration command did not succeed after 5 attempts."
+          exit 1
           
