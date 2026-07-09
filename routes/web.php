@@ -24,14 +24,21 @@ Route::middleware('auth')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
-
+    // Offers Routes
     Route::post('/offers', [OfferController::class, 'store']);
     Route::post('/offers/{offer}/join', [OfferController::class, 'join']);
     Route::post('/offers/{offer}/place-order', [OfferController::class, 'placeOrder']);
     Route::post('/offers/{offer}/update-order', [OfferController::class, 'updateOrder']);
     Route::post('/offers/{offer}/replace-order', [OfferController::class, 'replaceOrder']);
     Route::post('/offers/{offer}/cancel-order', [OfferController::class, 'cancelOrder']);
+    Route::post('/offers/{offer}/close', [OfferController::class, 'close']);
+    Route::post('/offers/{offer}/mark-arrived', [OfferController::class, 'markArrived']);
+    Route::post('/offers/{offer}/submit-payment', [OfferController::class, 'submitPayment']);
+    Route::get('/offers/{offer}/my-order', [OfferController::class, 'myOrder']);
+    Route::get('/my-orders', [OfferController::class, 'myOrders']);
+    Route::get('/offers', [OfferController::class, 'index']);
     Route::get('/offers/{offer}', [OfferController::class, 'show']);
+    Route::get('/offers/{offer}/payment-methods', [OfferController::class, 'getPaymentMethods']);
 
     Route::post('/auth/logout', function (Request $request) {
         Auth::logout();

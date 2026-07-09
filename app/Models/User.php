@@ -40,6 +40,11 @@ class User extends Authenticatable
 
     public function joinedOffers(): BelongsToMany
     {
-        return $this->belongsToMany(Offer::class, 'offer_user', 'user_id', 'offer_id')->withTimestamps();
+        return $this->belongsToMany(Offer::class, 'offer_buyers', 'buyer_id', 'offer_id')->withTimestamps();
+    }
+
+    public function offerOrders()
+    {
+        return $this->hasMany(OfferBuyer::class, 'buyer_id', 'user_id');
     }
 }
