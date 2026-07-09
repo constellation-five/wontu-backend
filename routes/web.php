@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\OfferController;
 use App\Http\Controllers\PaymentMethodController;
+use App\Http\Controllers\RequestController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -54,4 +55,10 @@ Route::middleware('auth')->group(function () {
     Route::put('/payment-methods/{id}', [PaymentMethodController::class, 'update']);
     Route::delete('/payment-methods/{id}', [PaymentMethodController::class, 'destroy']);
     Route::get('/test-detail/{offer}', [OfferController::class, 'show']);
+
+    // Request Routes
+    Route::post('/requests', [RequestController::class, 'store']);
+    Route::put('/requests/{id}', [RequestController::class, 'update']);
+    Route::delete('/requests/{id}', [RequestController::class, 'destroy']);
+    Route::post('/requests/{id}/vote', [RequestController::class, 'toggleVote']);
 });
