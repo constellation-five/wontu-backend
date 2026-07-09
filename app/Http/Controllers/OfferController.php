@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\JoinOfferRequest;
 use App\Http\Requests\StoreOfferRequest;
+use App\Models\Item;
 use App\Models\Offer;
 use App\Models\OfferBuyer;
-use App\Models\Item;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,13 +13,18 @@ use Illuminate\Support\Facades\DB;
 class OfferController extends Controller
 {
     /**
+     * Offers only show up for buyers within this many meters of the offer's location.
+     */
+    private const NEARBY_RADIUS_METERS = 200;
+
+    /**
      * Validasi apakah seller mencoba memesan di offer sendiri
      */
     private function validateSellerNotBuyer(Offer $offer, string|int $userId): ?JsonResponse
     {
         if ($offer->seller_id === $userId) {
             return response()->json([
-                'message' => 'Penjual tidak bisa memesan di penawarannya sendiri.'
+                'message' => 'Penjual tidak bisa memesan di penawarannya sendiri.',
             ], 403);
         }
 
@@ -29,16 +33,17 @@ class OfferController extends Controller
 
     /**
      * Update stok item dengan validasi
-     * @param Item $item - Item yang akan diupdate
-     * @param int $quantityChange - Perubahan quantity (positif = tambah, negatif = kurangi)
-     * @param bool $allowNegative - Izinkan hasil negatif (untuk rollback)
+     *
+     * @param  Item  $item  - Item yang akan diupdate
+     * @param  int  $quantityChange  - Perubahan quantity (positif = tambah, negatif = kurangi)
+     * @param  bool  $allowNegative  - Izinkan hasil negatif (untuk rollback)
      */
     private function updateItemStock(Item $item, int $quantityChange, bool $allowNegative = false): ?JsonResponse
     {
         $newCurrentSlot = $item->current_slot + $quantityChange;
 
         // Validasi: current_slot tidak boleh negatif (kecuali diizinkan untuk rollback)
-        if (!$allowNegative && $newCurrentSlot < 0) {
+        if (! $allowNegative && $newCurrentSlot < 0) {
             return response()->json([
                 'message' => "Tidak bisa mengurangi stok item '{$item->item_name}' lebih dari yang sudah dipesan.",
             ], 400);
@@ -48,7 +53,7 @@ class OfferController extends Controller
         if ($newCurrentSlot > $item->slot) {
             return response()->json([
                 'message' => "Stok item '{$item->item_name}' tidak cukup.",
-                'available' => $item->slot - $item->current_slot
+                'available' => $item->slot - $item->current_slot,
             ], 400);
         }
 
@@ -61,22 +66,30 @@ class OfferController extends Controller
     public function index(Request $request): JsonResponse
     {
         $search = $request->query('search');
+        $validated = $request->validate([
+            'lat' => ['sometimes', 'numeric', 'between:-90,90', 'required_with:lng'],
+            'lng' => ['sometimes', 'numeric', 'between:-180,180', 'required_with:lat'],
+        ]);
 
         $offers = Offer::with(['items', 'seller'])
+            ->withCoordinates()
             ->when($search, function ($query, $search) {
                 return $query->where(function ($q) use ($search) {
                     $q->where('merchant_name', 'LIKE', "%{$search}%")
-                    ->orWhereHas('items', function ($itemQuery) use ($search) {
-                        $itemQuery->where('item_name', 'LIKE', "%{$search}%");
-                    });
+                        ->orWhereHas('items', function ($itemQuery) use ($search) {
+                            $itemQuery->where('item_name', 'LIKE', "%{$search}%");
+                        });
                 });
+            })
+            ->when(isset($validated['lat'], $validated['lng']), function ($query) use ($validated) {
+                return $query->nearby($validated['lat'], $validated['lng'], self::NEARBY_RADIUS_METERS);
             })
             ->orderBy('created_at', 'desc')
             ->get();
 
         return response()->json([
             'status' => 'success',
-            'data' => $offers
+            'data' => $offers,
         ], 200);
     }
 
@@ -88,6 +101,8 @@ class OfferController extends Controller
             'seller_id' => $request->user()->user_id,
             'category' => $validated['category'],
             'merchant_name' => $validated['merchant_name'] ?? '',
+            'location_label' => $validated['location_label'] ?? null,
+            'location' => Offer::makePoint($validated['location_lat'], $validated['location_lng']),
             'closing_time' => $validated['closing_time'],
             'arrival_time' => $validated['arrival_time'],
             'has_cod_payment' => $validated['has_cod_payment'] ?? false,
@@ -104,8 +119,9 @@ class OfferController extends Controller
         ], 201);
     }
 
-    public function show(Offer $offer) {
-        $offer->load(['items', 'seller']);
+    public function show(Offer $offer)
+    {
+        $offer = Offer::withCoordinates()->with(['items', 'seller'])->findOrFail($offer->offer_id);
 
         return response()->json($offer);
     }
@@ -430,7 +446,7 @@ class OfferController extends Controller
 
             if (! $offerBuyer) {
                 return response()->json([
-                    'message' => 'Anda tidak memiliki pesanan di offer ini.'
+                    'message' => 'Anda tidak memiliki pesanan di offer ini.',
                 ], 404);
             }
 
