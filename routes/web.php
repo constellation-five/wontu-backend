@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\GoogleAuthController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OfferController;
 use App\Http\Controllers\PaymentMethodController;
 use App\Http\Controllers\RequestController;
@@ -28,6 +29,7 @@ Route::middleware('auth')->group(function () {
     // Offers Routes
     Route::post('/offers', [OfferController::class, 'store']);
     Route::post('/offers/{offer}/join', [OfferController::class, 'join']);
+    Route::post('/offers/{offer}/complete', [OfferController::class, 'complete']);
     Route::post('/offers/{offer}/place-order', [OfferController::class, 'placeOrder']);
     Route::post('/offers/{offer}/update-order', [OfferController::class, 'updateOrder']);
     Route::post('/offers/{offer}/replace-order', [OfferController::class, 'replaceOrder']);
@@ -61,4 +63,13 @@ Route::middleware('auth')->group(function () {
     Route::put('/requests/{id}', [RequestController::class, 'update']);
     Route::delete('/requests/{id}', [RequestController::class, 'destroy']);
     Route::post('/requests/{id}/vote', [RequestController::class, 'toggleVote']);
+    // Notification Routes
+    Route::prefix('notifications')->group(function (): void {
+        Route::get('/', [NotificationController::class, 'index']);
+        Route::get('/unread-count', [NotificationController::class, 'unreadCount']);
+        Route::post('/mark-all-read', [NotificationController::class, 'markAllRead']);
+        Route::patch('/{id}/mark-read', [NotificationController::class, 'markRead']);
+        Route::delete('/{id}', [NotificationController::class, 'destroy']);
+        Route::delete('/', [NotificationController::class, 'destroyAll']);
+    });
 });
