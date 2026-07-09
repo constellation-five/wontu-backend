@@ -48,13 +48,10 @@ Route::middleware('auth')->group(function () {
     Route::put('/payment-methods/{id}', [PaymentMethodController::class, 'update']);
     Route::delete('/payment-methods/{id}', [PaymentMethodController::class, 'destroy']);
     Route::get('/test-detail/{offer}', [OfferController::class, 'show']);
-});
 
-Route::middleware('auth:sanctum')->group(function () {
+    // Request Routes
     Route::post('/requests', [RequestController::class, 'store']);
     Route::put('/requests/{id}', [RequestController::class, 'update']);
     Route::delete('/requests/{id}', [RequestController::class, 'destroy']);
-    
-    // Love (Voting/Request) Routes
     Route::post('/requests/{id}/vote', [RequestController::class, 'toggleVote']);
 });
