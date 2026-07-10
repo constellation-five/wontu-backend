@@ -511,7 +511,7 @@ class OfferController extends Controller
     {
         $userId = $request->user()->user_id;
 
-        return DB::transaction(function () use ($offer, $userId) {
+        return DB::transaction(function () use ($offer, $userId, $request) {
             $offerBuyer = OfferBuyer::where('offer_id', $offer->offer_id)
                 ->where('buyer_id', $userId)
                 ->with('items')
