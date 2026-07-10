@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 
-#[Fillable(['requester_id', 'item_name', 'category', 'arrival_time', 'total_votes'])]
+#[Fillable(['requester_id', 'location_label', 'location', 'item_name', 'category', 'arrival_time', 'total_votes'])]
 class Request extends Model
 {
     protected $table = 'requests';
