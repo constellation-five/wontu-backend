@@ -60,7 +60,7 @@ class OfferSeeder extends Seeder
                 'slot' => 12,
                 'current_slot' => 0,
                 'image_url' => 'https://res.cloudinary.com/ditdykukf/image/upload/v1777538246/Screenshot_2026-04-30_153544_x3lclh.png',
-            ]
+            ],
         ]);
 
         $offer2 = Offer::create([
@@ -101,6 +101,132 @@ class OfferSeeder extends Seeder
             'slot' => 5,
             'current_slot' => 0,
             'image_url' => 'https://res.cloudinary.com/ditdykukf/image/upload/v1777538467/Screenshot_2026-04-30_154024_rzsp8b.png',
+        ]);
+
+        $offer4 = Offer::create([
+            'seller_id' => $seller->user_id,
+            'category' => 'food',
+            'merchant_name' => 'Martabak Legit',
+            'location_label' => 'BCA Learning Institute',
+            'location' => Offer::makePoint(-6.585841, 106.882002),
+            'closing_time' => now()->addHours(2),
+            'arrival_time' => now()->addHours(5),
+            'has_cod_payment' => true,
+            'is_completed' => false,
+        ]);
+
+        $offer4->items()->createMany([
+            [
+                'item_name' => 'Martabak Manis Keju Susu',
+                'item_price' => 20000.00,
+                'slot' => 10,
+                'current_slot' => 0,
+                'image_url' => 'https://res.cloudinary.com/ditdykukf/image/upload/v1777538246/Screenshot_2026-04-30_153544_x3lclh.png',
+            ],
+            [
+                'item_name' => 'Martabak Telur',
+                'item_price' => 25000.00,
+                'slot' => 5,
+                'current_slot' => 1,
+                'image_url' => 'https://res.cloudinary.com/ditdykukf/image/upload/v1777538246/Screenshot_2026-04-30_153646_fabyul.png',
+            ],
+            [
+                'item_name' => 'Martabak Manis Cokelat Kacang',
+                'item_price' => 22000.00,
+                'slot' => 8,
+                'current_slot' => 2,
+                'image_url' => 'https://res.cloudinary.com/ditdykukf/image/upload/v1777538246/Screenshot_2026-04-30_153544_x3lclh.png',
+            ],
+            [
+                'item_name' => 'Martabak Tipker (Tipis Kering)',
+                'item_price' => 18000.00,
+                'slot' => 12,
+                'current_slot' => 0,
+                'image_url' => 'https://res.cloudinary.com/ditdykukf/image/upload/v1777538246/Screenshot_2026-04-30_153544_x3lclh.png',
+            ],
+        ]);
+
+        $offer5 = Offer::create([
+            'seller_id' => $seller->user_id,
+            'category' => 'food',
+            'merchant_name' => 'Tea',
+            'location_label' => 'BCA Learning Institute',
+            'location' => Offer::makePoint(-6.585841, 106.882002),
+            'closing_time' => now()->addHours(1),
+            'arrival_time' => now()->addHours(3),
+            'has_cod_payment' => false,
+            'is_completed' => false,
+        ]);
+
+        $offer5->items()->create([
+            'item_name' => 'Deep Roast Oloong Milk Tea',
+            'item_price' => 20000.00,
+            'slot' => 20,
+            'current_slot' => 5,
+            'image_url' => 'https://res.cloudinary.com/ditdykukf/image/upload/v1777538313/Screenshot_2026-04-30_153820_prneqm.png',
+        ]);
+
+        $offer6 = Offer::create([
+            'seller_id' => $seller->user_id,
+            'category' => 'food',
+            'merchant_name' => 'Martabak Orins',
+            'location_label' => 'Rumah Talenta BCA',
+            'location' => Offer::makePoint(-6.588640, 106.882475),
+            'closing_time' => now()->addHours(2),
+            'arrival_time' => now()->addHours(5),
+            'has_cod_payment' => true,
+            'is_completed' => false,
+        ]);
+
+        $offer6->items()->createMany([
+            [
+                'item_name' => 'Martabak Manis Keju Susu',
+                'item_price' => 20000.00,
+                'slot' => 10,
+                'current_slot' => 0,
+                'image_url' => 'https://res.cloudinary.com/ditdykukf/image/upload/v1777538246/Screenshot_2026-04-30_153544_x3lclh.png',
+            ],
+            [
+                'item_name' => 'Martabak Telur',
+                'item_price' => 25000.00,
+                'slot' => 5,
+                'current_slot' => 1,
+                'image_url' => 'https://res.cloudinary.com/ditdykukf/image/upload/v1777538246/Screenshot_2026-04-30_153646_fabyul.png',
+            ],
+            [
+                'item_name' => 'Martabak Manis Cokelat Kacang',
+                'item_price' => 22000.00,
+                'slot' => 8,
+                'current_slot' => 2,
+                'image_url' => 'https://res.cloudinary.com/ditdykukf/image/upload/v1777538246/Screenshot_2026-04-30_153544_x3lclh.png',
+            ],
+            [
+                'item_name' => 'Martabak Tipker (Tipis Kering)',
+                'item_price' => 18000.00,
+                'slot' => 12,
+                'current_slot' => 0,
+                'image_url' => 'https://res.cloudinary.com/ditdykukf/image/upload/v1777538246/Screenshot_2026-04-30_153544_x3lclh.png',
+            ],
+        ]);
+
+        $offer7 = Offer::create([
+            'seller_id' => $seller->user_id,
+            'category' => 'food',
+            'merchant_name' => 'Es Teh Indonesia',
+            'location_label' => 'Rumah Talenta BCA',
+            'location' => Offer::makePoint(-6.588640, 106.882475),
+            'closing_time' => now()->addHours(1),
+            'arrival_time' => now()->addHours(3),
+            'has_cod_payment' => false,
+            'is_completed' => false,
+        ]);
+
+        $offer7->items()->create([
+            'item_name' => 'Deep Roast Oloong Milk Tea',
+            'item_price' => 20000.00,
+            'slot' => 20,
+            'current_slot' => 5,
+            'image_url' => 'https://res.cloudinary.com/ditdykukf/image/upload/v1777538313/Screenshot_2026-04-30_153820_prneqm.png',
         ]);
     }
 }
