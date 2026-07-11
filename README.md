@@ -15,6 +15,7 @@ Laravel API backend for Wontu.
 
 ```bash
 composer install
+pnpm install -g concurrently
 ```
 
 2. Create environment file:
@@ -49,7 +50,7 @@ php artisan migrate
 1. Start server:
 
 ```bash
-php artisan serve
+composer run dev
 ```
 
 2. Open: http://localhost:8000

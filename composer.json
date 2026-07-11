@@ -45,7 +45,7 @@
             "@php artisan migrate --force"
         ],
         "dev": [
-            "@php artisan serve"
+            "concurrently \"php artisan serve\" \"php artisan queue:work\""
         ],
         "test": [
             "@php artisan config:clear --ansi",
