@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Notifications\Messages\BroadcastMessage;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class OrderUpdatedNotification extends Notification implements ShouldBroadcastNow
@@ -20,7 +21,7 @@ class OrderUpdatedNotification extends Notification implements ShouldBroadcastNo
 
     public function via(object $notifiable): array
     {
-        return ['broadcast', 'database'];
+        return ['broadcast', 'database', 'mail'];
     }
 
     public function toBroadcast(object $notifiable): BroadcastMessage
@@ -33,6 +34,13 @@ class OrderUpdatedNotification extends Notification implements ShouldBroadcastNo
         return $this->data();
     }
 
+    public function toMail(object $notifiable): MailMessage
+    {
+        return (new MailMessage)
+            ->subject('Order Updated - Wontu')
+            ->view('emails.notification', ['data' => $this->data()]);
+    }
+
     private function data(): array
     {
         return [
@@ -40,6 +48,7 @@ class OrderUpdatedNotification extends Notification implements ShouldBroadcastNo
             'description' => "{$this->buyer->name} updated their order in your {$this->offer->merchant_name} offer.",
             'icon' => 'edit',
             'notification_type' => 'info',
+            'action_url' => "/offers/{$this->offer->offer_id}",
         ];
     }
 }
