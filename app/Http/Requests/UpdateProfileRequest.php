@@ -23,6 +23,7 @@ class UpdateProfileRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'name' => ['sometimes', 'string', 'max:128'],
             'username' => ['sometimes', 'string', 'max:64', 'unique:users,username,' . $this->user()->user_id . ',user_id'],
             'avatar' => ['sometimes', 'string', 'max:255'],
         ];
