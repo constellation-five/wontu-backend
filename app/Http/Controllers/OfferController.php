@@ -6,6 +6,11 @@ use App\Http\Requests\StoreOfferRequest;
 use App\Models\Item;
 use App\Models\Offer;
 use App\Models\OfferBuyer;
+use App\Notifications\BuyerJoinedNotification;
+use App\Notifications\OfferCompletedNotification;
+use App\Notifications\OrderCancelledNotification;
+use App\Notifications\OrderPlacedNotification;
+use App\Notifications\OrderUpdatedNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -285,6 +290,69 @@ class OfferController extends Controller
         ], 200);
     }
 
+    /**
+     * Buyer expresses intent to join an offer, before placing any items.
+     */
+    public function join(Request $request, Offer $offer): JsonResponse
+    {
+        $userId = $request->user()->user_id;
+
+        if ($offer->seller_id === $userId) {
+            return response()->json([
+                'message' => 'You cannot join your own offer.',
+            ], 403);
+        }
+
+        $existing = OfferBuyer::where('offer_id', $offer->offer_id)
+            ->where('buyer_id', $userId)
+            ->first();
+
+        if (! $existing) {
+            OfferBuyer::create([
+                'offer_id' => $offer->offer_id,
+                'buyer_id' => $userId,
+                'status' => 'pending',
+            ]);
+
+            $offer->seller->notify(new BuyerJoinedNotification($request->user(), $offer));
+        }
+
+        return response()->json([
+            'message' => 'Berhasil bergabung dengan offer.',
+            'offer' => $offer->fresh()->load('items', 'buyers'),
+        ], 200);
+    }
+
+    /**
+     * Seller marks the offer as complete, notifying all joined buyers.
+     */
+    public function complete(Request $request, Offer $offer): JsonResponse
+    {
+        if ($offer->seller_id !== $request->user()->user_id) {
+            return response()->json([
+                'message' => 'Hanya penjual yang bisa menyelesaikan offer ini.',
+            ], 403);
+        }
+
+        if ($offer->is_completed) {
+            return response()->json([
+                'message' => 'Offer sudah selesai.',
+            ], 409);
+        }
+
+        $offer->is_completed = true;
+        $offer->save();
+
+        foreach ($offer->buyers as $buyer) {
+            $buyer->notify(new OfferCompletedNotification($offer));
+        }
+
+        return response()->json([
+            'message' => 'Offer berhasil diselesaikan.',
+            'offer' => $offer->fresh(),
+        ], 200);
+    }
+
     public function placeOrder(Request $request, Offer $offer): JsonResponse
     {
         $userId = $request->user()->user_id;
@@ -295,7 +363,7 @@ class OfferController extends Controller
             'items.*.notes' => 'nullable|string',
         ]);
 
-        return DB::transaction(function () use ($validated, $offer, $userId) {
+        return DB::transaction(function () use ($validated, $offer, $userId, $request) {
             // Validasi seller tidak bisa jadi buyer
             if ($error = $this->validateSellerNotBuyer($offer, $userId)) {
                 return $error;
@@ -335,6 +403,7 @@ class OfferController extends Controller
                     'notes' => $orderItem['notes'] ?? null,
                 ]);
             }
+            $offer->seller->notify(new OrderPlacedNotification($request->user(), $offer));
 
             return response()->json([
                 'message' => 'Pesanan berhasil diproses dan Anda telah bergabung.',
@@ -351,7 +420,7 @@ class OfferController extends Controller
             'items.*.quantity_diff' => 'required|integer',
         ]);
 
-        return DB::transaction(function () use ($validated, $offer) {
+        return DB::transaction(function () use ($validated, $offer, $request) {
             foreach ($validated['items'] as $orderItem) {
                 $item = $offer->items()->find($orderItem['item_id']);
 
@@ -361,6 +430,8 @@ class OfferController extends Controller
                     }
                 }
             }
+
+            $offer->seller->notify(new OrderUpdatedNotification($request->user(), $offer));
 
             return response()->json([
                 'message' => 'Pesanan berhasil diupdate.',
@@ -379,7 +450,7 @@ class OfferController extends Controller
             'items.*.notes' => 'nullable|string',
         ]);
 
-        return DB::transaction(function () use ($validated, $offer, $userId) {
+        return DB::transaction(function () use ($validated, $offer, $userId, $request) {
             // Validasi seller tidak bisa jadi buyer
             if ($error = $this->validateSellerNotBuyer($offer, $userId)) {
                 return $error;
@@ -427,6 +498,8 @@ class OfferController extends Controller
                 ]);
             }
 
+            $offer->seller->notify(new OrderUpdatedNotification($request->user(), $offer));
+
             return response()->json([
                 'message' => 'Pesanan berhasil diproses.',
                 'offer' => $offer->fresh()->load('items', 'buyers'),
@@ -438,7 +511,7 @@ class OfferController extends Controller
     {
         $userId = $request->user()->user_id;
 
-        return DB::transaction(function () use ($offer, $userId) {
+        return DB::transaction(function () use ($offer, $userId, $request) {
             $offerBuyer = OfferBuyer::where('offer_id', $offer->offer_id)
                 ->where('buyer_id', $userId)
                 ->with('items')
@@ -463,6 +536,8 @@ class OfferController extends Controller
 
             // Hapus pesanan (buyer_items ikut terhapus lewat cascade)
             $offerBuyer->delete();
+
+            $offer->seller->notify(new OrderCancelledNotification($request->user(), $offer));
 
             return response()->json([
                 'message' => 'Pesanan berhasil dibatalkan dan stok dikembalikan.',
