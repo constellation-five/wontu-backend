@@ -66,7 +66,7 @@ class ProfileController extends Controller
             ], 400);
         }
 
-        User::findOrFail($userId);
+        $followedUser = User::findOrFail($userId);
 
         if ($currentUser->following()->where('following_id', $userId)->exists()) {
             return response()->json([
@@ -76,6 +76,9 @@ class ProfileController extends Controller
         }
 
         $currentUser->following()->attach($userId);
+
+        // Send notification to the followed user
+        $followedUser->notify(new \App\Notifications\UserFollowedNotification($currentUser));
 
         return response()->json([
             'success' => true,
