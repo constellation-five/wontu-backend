@@ -1,6 +1,5 @@
 #!/bin/bash
-
-cp /home/site/wwwroot/nginx.conf /etc/nginx/sites-available/default
+cp /home/site/wwwroot/default /etc/nginx/sites-available/default
 
 nohup php /home/site/wwwroot/artisan queue:work > /home/site/wwwroot/storage/logs/queue.log 2>&1 &
 
