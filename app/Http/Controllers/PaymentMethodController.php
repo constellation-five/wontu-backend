@@ -24,7 +24,7 @@ class PaymentMethodController extends Controller
         $validated = $request->validate([
             'bank_name'     => 'required|string|max:64',
             'account_name'  => 'required|string|max:64',
-            'account_number'=> 'required|string|max:64',
+            'account_number'=> 'required|numeric|digits_between:1,20',
         ]);
 
         $paymentMethod = PaymentMethod::create([
@@ -46,7 +46,7 @@ class PaymentMethodController extends Controller
         $validated = $request->validate([
             'bank_name'      => 'required|string|max:64',
             'account_name'   => 'required|string|max:64',
-            'account_number' => 'required|string|max:64',
+            'account_number' => 'required|numeric|digits_between:1,20',
         ]);
 
         $paymentMethod = PaymentMethod::where('payment_method_id', $id)

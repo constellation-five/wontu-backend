@@ -29,7 +29,8 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            //
+            'created_at' => 'datetime',
+            'updated_at' => 'datetime',
         ];
     }
 
@@ -46,5 +47,29 @@ class User extends Authenticatable
     public function offerOrders()
     {
         return $this->hasMany(OfferBuyer::class, 'buyer_id', 'user_id');
+    }
+
+    // Followers: users yang follow user ini
+    public function followers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'follows', 'following_id', 'follower_id')->withTimestamps();
+    }
+
+    // Following: users yang di-follow oleh user ini
+    public function following(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'follows', 'follower_id', 'following_id')->withTimestamps();
+    }
+
+    // Ratings yang diterima user ini
+    public function receivedRatings()
+    {
+        return $this->hasMany(Rating::class, 'rated_user_id', 'user_id');
+    }
+
+    // Ratings yang diberikan user ini
+    public function givenRatings()
+    {
+        return $this->hasMany(Rating::class, 'rater_id', 'user_id');
     }
 }
