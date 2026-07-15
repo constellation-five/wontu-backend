@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['offer_id', 'buyer_id', 'is_verified', 'payment_proof_url', 'payment_submitted_at', 'verified_at', 'status'])]
+#[Fillable(['offer_id', 'buyer_id', 'is_confirmed', 'payment_proof_url', 'payment_submitted_at', 'confirmed_at'])]
 class OfferBuyer extends Model
 {
     protected $primaryKey = 'offer_buyer_id';
@@ -15,9 +15,9 @@ class OfferBuyer extends Model
     protected function casts(): array
     {
         return [
-            'is_verified' => 'boolean',
-            'payment_submitted_at' => 'datetime:Y-m-d H:i:s',
-            'verified_at' => 'datetime:Y-m-d H:i:s',
+            'is_confirmed' => 'boolean',
+            'payment_submitted_at' => 'datetime',
+            'confirmed_at' => 'datetime',
         ];
     }
 

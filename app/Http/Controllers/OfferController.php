@@ -3,17 +3,27 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreOfferRequest;
+use Carbon\Carbon;
 use App\Models\Item;
 use App\Models\Offer;
 use App\Models\OfferBuyer;
 use App\Notifications\BuyerJoinedNotification;
+use App\Notifications\BuyerRemovedFromOfferNotification;
+use App\Notifications\ItemAdjustedNotification;
+use App\Notifications\ItemsArrivedNotification;
 use App\Notifications\OfferCompletedNotification;
+use App\Notifications\OfferDeletedNotification;
+use App\Notifications\OfferEditedNotification;
 use App\Notifications\OrderCancelledNotification;
 use App\Notifications\OrderPlacedNotification;
 use App\Notifications\OrderUpdatedNotification;
+use App\Notifications\PaymentConfirmedNotification;
+use App\Notifications\PaymentProofUploadedNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class OfferController extends Controller
 {
@@ -31,6 +41,17 @@ class OfferController extends Controller
             return response()->json([
                 'message' => 'Penjual tidak bisa memesan di penawarannya sendiri.',
             ], 403);
+        }
+
+        return null;
+    }
+
+    private function validateOfferOpen(Offer $offer): ?JsonResponse
+    {
+        if ($offer->closed_at !== null) {
+            return response()->json([
+                'message' => 'Offer ini sudah ditutup dan tidak menerima pesanan baru.',
+            ], 409);
         }
 
         return null;
@@ -78,6 +99,7 @@ class OfferController extends Controller
 
         $offers = Offer::with(['items', 'seller'])
             ->withCoordinates()
+            ->whereNull('closed_at')
             ->when($search, function ($query, $search) {
                 return $query->where(function ($q) use ($search) {
                     $q->where('merchant_name', 'LIKE', "%{$search}%")
@@ -108,8 +130,8 @@ class OfferController extends Controller
             'merchant_name' => $validated['merchant_name'] ?? '',
             'location_label' => $validated['location_label'] ?? null,
             'location' => Offer::makePoint($validated['location_lat'], $validated['location_lng']),
-            'closing_time' => $validated['closing_time'],
-            'arrival_time' => $validated['arrival_time'],
+            'closing_time' => Carbon::parse($validated['closing_time'])->format('Y-m-d H:i:s'),
+            'arrival_time' => Carbon::parse($validated['arrival_time'])->format('Y-m-d H:i:s'),
             'has_cod_payment' => $validated['has_cod_payment'] ?? false,
             'is_completed' => false,
         ]);
@@ -117,6 +139,8 @@ class OfferController extends Controller
         if (! empty($validated['items'] ?? [])) {
             $offer->items()->createMany($validated['items']);
         }
+
+        $offer->paymentMethods()->sync($validated['payment_method_ids'] ?? []);
 
         return response()->json([
             'message' => 'Offer created successfully.',
@@ -148,12 +172,11 @@ class OfferController extends Controller
             'data' => $orders->map(fn ($offerBuyer) => [
                 'offer_id' => $offerBuyer->offer_id,
                 'merchant_name' => $offerBuyer->offer->merchant_name,
-                'status' => $offerBuyer->status,
-                'is_verified' => $offerBuyer->is_verified,
+                'is_confirmed' => $offerBuyer->is_confirmed,
                 'payment_proof_url' => $offerBuyer->payment_proof_url,
                 'joined_at' => $offerBuyer->created_at,
                 'payment_submitted_at' => $offerBuyer->payment_submitted_at,
-                'verified_at' => $offerBuyer->verified_at,
+                'confirmed_at' => $offerBuyer->confirmed_at,
                 'created_at' => $offerBuyer->created_at,
                 'items' => $offerBuyer->items->map(fn ($buyerItem) => [
                     'item' => $buyerItem->item,
@@ -186,12 +209,11 @@ class OfferController extends Controller
         return response()->json([
             'status' => 'success',
             'data' => [
-                'status' => $offerBuyer->status,
-                'is_verified' => $offerBuyer->is_verified,
+                'is_confirmed' => $offerBuyer->is_confirmed,
                 'payment_proof_url' => $offerBuyer->payment_proof_url,
                 'joined_at' => $offerBuyer->created_at,
                 'payment_submitted_at' => $offerBuyer->payment_submitted_at,
-                'verified_at' => $offerBuyer->verified_at,
+                'confirmed_at' => $offerBuyer->confirmed_at,
                 'items' => $offerBuyer->items->map(fn ($buyerItem) => [
                     'item' => $buyerItem->item,
                     'quantity' => $buyerItem->quantity,
@@ -249,6 +271,10 @@ class OfferController extends Controller
         $offer->arrived_at = now();
         $offer->save();
 
+        foreach ($offer->buyers as $buyer) {
+            $buyer->notify(new ItemsArrivedNotification($offer));
+        }
+
         return response()->json([
             'message' => 'Offer berhasil ditandai sebagai tiba.',
             'offer' => $offer->fresh(),
@@ -284,6 +310,8 @@ class OfferController extends Controller
         }
         $offerBuyer->save();
 
+        $offer->seller->notify(new PaymentProofUploadedNotification($request->user(), $offer));
+
         return response()->json([
             'message' => 'Bukti pembayaran berhasil dikirim.',
             'offer_buyer' => $offerBuyer->fresh(),
@@ -303,6 +331,10 @@ class OfferController extends Controller
             ], 403);
         }
 
+        if ($error = $this->validateOfferOpen($offer)) {
+            return $error;
+        }
+
         $existing = OfferBuyer::where('offer_id', $offer->offer_id)
             ->where('buyer_id', $userId)
             ->first();
@@ -311,7 +343,6 @@ class OfferController extends Controller
             OfferBuyer::create([
                 'offer_id' => $offer->offer_id,
                 'buyer_id' => $userId,
-                'status' => 'pending',
             ]);
 
             $offer->seller->notify(new BuyerJoinedNotification($request->user(), $offer));
@@ -369,6 +400,10 @@ class OfferController extends Controller
                 return $error;
             }
 
+            if ($error = $this->validateOfferOpen($offer)) {
+                return $error;
+            }
+
             $existing = OfferBuyer::where('offer_id', $offer->offer_id)
                 ->where('buyer_id', $userId)
                 ->first();
@@ -393,7 +428,6 @@ class OfferController extends Controller
             $offerBuyer = OfferBuyer::create([
                 'offer_id' => $offer->offer_id,
                 'buyer_id' => $userId,
-                'status' => 'pending',
             ]);
 
             foreach ($validated['items'] as $orderItem) {
@@ -453,6 +487,10 @@ class OfferController extends Controller
         return DB::transaction(function () use ($validated, $offer, $userId, $request) {
             // Validasi seller tidak bisa jadi buyer
             if ($error = $this->validateSellerNotBuyer($offer, $userId)) {
+                return $error;
+            }
+
+            if ($error = $this->validateOfferOpen($offer)) {
                 return $error;
             }
 
@@ -544,5 +582,396 @@ class OfferController extends Controller
                 'offer' => $offer->fresh()->load('items', 'buyers'),
             ], 200);
         });
+    }
+
+    /**
+     * List all offers created by the authenticated seller.
+     */
+    public function myOffers(Request $request): JsonResponse
+    {
+        $offers = Offer::where('seller_id', $request->user()->user_id)
+            ->with(['items'])
+            ->withCoordinates()
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $offers,
+        ], 200);
+    }
+
+    /**
+     * List all orders (offer_buyers) placed on this offer, seller-only.
+     */
+    public function orders(Request $request, Offer $offer): JsonResponse
+    {
+        if ($offer->seller_id !== $request->user()->user_id) {
+            return response()->json([
+                'message' => 'Hanya penjual yang bisa melihat pesanan offer ini.',
+            ], 403);
+        }
+
+        $offerBuyers = OfferBuyer::where('offer_id', $offer->offer_id)
+            ->with(['buyer', 'items.item'])
+            ->get();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $offerBuyers->map(fn (OfferBuyer $offerBuyer) => [
+                'offer_buyer_id' => $offerBuyer->offer_buyer_id,
+                'buyer' => [
+                    'user_id' => $offerBuyer->buyer->user_id,
+                    'name' => $offerBuyer->buyer->name,
+                    'avatar' => $offerBuyer->buyer->avatar,
+                ],
+                'is_confirmed' => $offerBuyer->is_confirmed,
+                'payment_proof_url' => $offerBuyer->payment_proof_url,
+                'joined_at' => $offerBuyer->created_at,
+                'payment_submitted_at' => $offerBuyer->payment_submitted_at,
+                'confirmed_at' => $offerBuyer->confirmed_at,
+                'items' => $offerBuyer->items->map(fn ($buyerItem) => [
+                    'item' => $buyerItem->item,
+                    'quantity' => $buyerItem->quantity,
+                    'notes' => $buyerItem->notes,
+                ]),
+            ]),
+        ], 200);
+    }
+
+    /**
+     * Seller confirms a buyer's payment for this offer.
+     */
+    public function confirmPayment(Request $request, Offer $offer, OfferBuyer $offerBuyer): JsonResponse
+    {
+        if ($offer->seller_id !== $request->user()->user_id) {
+            return response()->json([
+                'message' => 'Hanya penjual yang bisa mengonfirmasi pembayaran ini.',
+            ], 403);
+        }
+
+        if ($offerBuyer->offer_id !== $offer->offer_id) {
+            return response()->json([
+                'message' => 'Pesanan tidak ditemukan pada offer ini.',
+            ], 404);
+        }
+
+        $offerBuyer->is_confirmed = true;
+        $offerBuyer->confirmed_at = now();
+        $offerBuyer->save();
+
+        $offerBuyer->buyer->notify(new PaymentConfirmedNotification($offer));
+
+        return response()->json([
+            'message' => 'Pembayaran berhasil dikonfirmasi.',
+            'offer_buyer' => $offerBuyer->fresh(),
+        ], 200);
+    }
+
+    /**
+     * List the payment methods enabled for this offer.
+     */
+    public function getPaymentMethods(Request $request, Offer $offer): JsonResponse
+    {
+        return response()->json([
+            'status' => 'success',
+            'data' => $offer->paymentMethods,
+        ], 200);
+    }
+
+    /**
+     * Seller edits an existing offer: its own fields, its full item set, and
+     * its enabled payment methods. Items are reduced first with a LIFO
+     * (most-recently-joined-buyer-first) rollback against existing orders,
+     * before the new field values are applied.
+     */
+    public function update(Request $request, Offer $offer): JsonResponse
+    {
+        if ($offer->seller_id !== $request->user()->user_id) {
+            return response()->json([
+                'message' => 'Hanya penjual yang bisa mengubah offer ini.',
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'category' => ['required', Rule::in(['food', 'other'])],
+            'merchant_name' => ['nullable', 'string', 'max:64'],
+            'location_label' => ['nullable', 'string', 'max:255'],
+            'location_lat' => ['required', 'numeric', 'between:-90,90'],
+            'location_lng' => ['required', 'numeric', 'between:-180,180'],
+            'closing_time' => ['required', 'date'],
+            'arrival_time' => ['required', 'date', 'after_or_equal:closing_time'],
+            'has_cod_payment' => ['boolean'],
+            'items' => ['required', 'array'],
+            'items.*.item_id' => ['nullable', 'integer', 'exists:items,item_id'],
+            'items.*.item_name' => ['required', 'string', 'max:255'],
+            'items.*.item_price' => ['required', 'numeric', 'min:0'],
+            'items.*.item_url' => ['nullable', 'string', 'url'],
+            'items.*.slot' => ['required', 'integer', 'min:0'],
+            'items.*.image_url' => ['nullable', 'string', 'url'],
+            'payment_method_ids' => ['sometimes', 'array'],
+            'payment_method_ids.*' => ['integer', 'exists:payment_methods,payment_method_id'],
+        ]);
+
+        return DB::transaction(function () use ($validated, $offer, $request) {
+            // Step 1: snapshot pre-edit state.
+            $oldItems = $offer->items()->get()->keyBy('item_id');
+            $oldOfferBuyers = OfferBuyer::where('offer_id', $offer->offer_id)
+                ->with('items.item')
+                ->get()
+                ->keyBy('offer_buyer_id');
+            $oldArrivalTime = $offer->arrival_time?->toDateTimeString();
+            $oldCategory = $offer->category;
+            $oldMerchantName = $offer->merchant_name;
+
+            $payloadItems = collect($validated['items']);
+            $payloadItemIds = $payloadItems->pluck('item_id')->filter()->values();
+
+            $removedBuyers = collect(); // offer_buyer_id => Offer\Buyer (fully removed)
+            $adjustedBuyers = collect(); // offer_buyer_id => ['buyer' => User, 'items' => [itemName => newQty]]
+
+            // Step 2 & 3: for every existing item no longer present (or shrunk),
+            // compute the deficit and roll back buyer_items LIFO.
+            foreach ($oldItems as $itemId => $item) {
+                $newSlot = $payloadItemIds->contains($itemId)
+                    ? (int) $payloadItems->firstWhere('item_id', $itemId)['slot']
+                    : 0;
+
+                $deficit = $item->current_slot - $newSlot;
+                if ($deficit <= 0) {
+                    continue;
+                }
+
+                $buyerItems = DB::table('buyer_items')
+                    ->join('offer_buyers', 'buyer_items.offer_buyer_id', '=', 'offer_buyers.offer_buyer_id')
+                    ->where('buyer_items.item_id', $itemId)
+                    ->where('offer_buyers.offer_id', $offer->offer_id)
+                    ->orderBy('offer_buyers.created_at', 'desc')
+                    ->select('buyer_items.id', 'buyer_items.offer_buyer_id', 'buyer_items.quantity')
+                    ->get();
+
+                foreach ($buyerItems as $buyerItem) {
+                    if ($deficit <= 0) {
+                        break;
+                    }
+
+                    $consumed = min($deficit, $buyerItem->quantity);
+                    $deficit -= $consumed;
+
+                    $offerBuyerModel = $oldOfferBuyers->get($buyerItem->offer_buyer_id);
+
+                    if ($consumed >= $buyerItem->quantity) {
+                        DB::table('buyer_items')->where('id', $buyerItem->id)->delete();
+                    } else {
+                        $remaining = $buyerItem->quantity - $consumed;
+                        DB::table('buyer_items')->where('id', $buyerItem->id)->update(['quantity' => $remaining]);
+                    }
+
+                    if ($offerBuyerModel) {
+                        $bucket = $adjustedBuyers->get($buyerItem->offer_buyer_id, [
+                            'buyer' => $offerBuyerModel->buyer,
+                            'items' => [],
+                        ]);
+                        $bucket['items'][$item->item_name] = max(0, $buyerItem->quantity - $consumed);
+                        $adjustedBuyers->put($buyerItem->offer_buyer_id, $bucket);
+                    }
+                }
+            }
+
+            // Buyers left with zero buyer_items rows are fully removed.
+            foreach ($adjustedBuyers as $offerBuyerId => $bucket) {
+                $remainingCount = DB::table('buyer_items')->where('offer_buyer_id', $offerBuyerId)->count();
+                if ($remainingCount === 0) {
+                    $offerBuyerModel = $oldOfferBuyers->get($offerBuyerId);
+                    $removedItemNames = collect($oldOfferBuyers->get($offerBuyerId)?->items ?? [])
+                        ->pluck('item.item_name')
+                        ->filter()
+                        ->values()
+                        ->all();
+                    $removedBuyers->put($offerBuyerId, [
+                        'buyer' => $offerBuyerModel?->buyer,
+                        'removedItemNames' => $removedItemNames,
+                    ]);
+                    $adjustedBuyers->forget($offerBuyerId);
+                }
+            }
+
+            foreach ($removedBuyers->keys() as $offerBuyerId) {
+                OfferBuyer::where('offer_buyer_id', $offerBuyerId)->delete();
+            }
+
+            // Step 4: apply new item field values / create new items.
+            foreach ($payloadItems as $payloadItem) {
+                if (! empty($payloadItem['item_id']) && $oldItems->has($payloadItem['item_id'])) {
+                    $item = $oldItems->get($payloadItem['item_id']);
+                    $item->item_name = $payloadItem['item_name'];
+                    $item->item_price = $payloadItem['item_price'];
+                    $item->item_url = $payloadItem['item_url'] ?? null;
+                    $item->slot = $payloadItem['slot'];
+                    $item->image_url = $payloadItem['image_url'] ?? null;
+                    // Recompute current_slot from the remaining buyer_items,
+                    // to stay consistent after any LIFO trimming above.
+                    $item->current_slot = (int) DB::table('buyer_items')->where('item_id', $item->item_id)->sum('quantity');
+                    $item->save();
+                } else {
+                    $offer->items()->create([
+                        'item_name' => $payloadItem['item_name'],
+                        'item_price' => $payloadItem['item_price'],
+                        'item_url' => $payloadItem['item_url'] ?? null,
+                        'slot' => $payloadItem['slot'],
+                        'image_url' => $payloadItem['image_url'] ?? null,
+                        'current_slot' => 0,
+                    ]);
+                }
+            }
+
+            // Items removed entirely from the payload get deleted (their
+            // buyer_items were already fully cleared out above).
+            $removedItemIds = $oldItems->keys()->diff($payloadItemIds);
+            if ($removedItemIds->isNotEmpty()) {
+                Item::whereIn('item_id', $removedItemIds)->delete();
+            }
+
+            // Step 5: update the offer's own fields.
+            $offer->category = $validated['category'];
+            $offer->merchant_name = $validated['merchant_name'] ?? '';
+            $offer->location_label = $validated['location_label'] ?? null;
+            $offer->location = Offer::makePoint($validated['location_lat'], $validated['location_lng']);
+            $offer->closing_time = Carbon::parse($validated['closing_time'])->format('Y-m-d H:i:s');
+            $offer->arrival_time = Carbon::parse($validated['arrival_time'])->format('Y-m-d H:i:s');
+            $offer->has_cod_payment = $validated['has_cod_payment'] ?? false;
+            $offer->save();
+
+            // Step 6: sync payment methods.
+            $offer->paymentMethods()->sync($validated['payment_method_ids'] ?? []);
+
+            // Step 7: notify removed / adjusted buyers, and detect disruptive edits for everyone else.
+            foreach ($removedBuyers as $info) {
+                if ($info['buyer']) {
+                    $info['buyer']->notify(new BuyerRemovedFromOfferNotification($offer, $info['removedItemNames']));
+                }
+            }
+
+            foreach ($adjustedBuyers as $bucket) {
+                foreach ($bucket['items'] as $itemName => $newQuantity) {
+                    $bucket['buyer']?->notify(new ItemAdjustedNotification($offer, $itemName, $newQuantity));
+                }
+            }
+
+            $arrivalChanged = $oldArrivalTime !== $offer->arrival_time?->toDateTimeString();
+            $categoryChanged = $oldCategory !== $offer->category;
+            $merchantChanged = $oldMerchantName !== $offer->merchant_name;
+            $newPricesByItemId = $payloadItems->filter(fn ($i) => ! empty($i['item_id']))->keyBy('item_id');
+
+            foreach ($oldOfferBuyers as $offerBuyerId => $offerBuyerModel) {
+                if ($removedBuyers->has($offerBuyerId) || $adjustedBuyers->has($offerBuyerId)) {
+                    continue;
+                }
+
+                $changes = [];
+                if ($arrivalChanged) {
+                    $changes['arrival_time'] = ['from' => $oldArrivalTime, 'to' => $offer->arrival_time?->toDateTimeString()];
+                }
+                if ($categoryChanged) {
+                    $changes['category'] = ['from' => $oldCategory, 'to' => $offer->category];
+                }
+                if ($merchantChanged) {
+                    $changes['merchant_name'] = ['from' => $oldMerchantName, 'to' => $offer->merchant_name];
+                }
+
+                $priceIncreases = [];
+                foreach ($offerBuyerModel->items as $buyerItem) {
+                    $newItem = $newPricesByItemId->get($buyerItem->item_id);
+                    if ($newItem && $buyerItem->item && (float) $newItem['item_price'] > (float) $buyerItem->item->item_price) {
+                        $priceIncreases[] = [
+                            'item_name' => $buyerItem->item->item_name,
+                            'from' => (float) $buyerItem->item->item_price,
+                            'to' => (float) $newItem['item_price'],
+                        ];
+                    }
+                }
+                if (! empty($priceIncreases)) {
+                    $changes['item_price_increase'] = $priceIncreases;
+                }
+
+                $disruptive = ! empty($changes);
+                $offerBuyerModel->buyer?->notify(new OfferEditedNotification($offer, $disruptive, $changes));
+            }
+
+            return response()->json([
+                'message' => 'Offer updated successfully.',
+                'offer' => $offer->fresh()->load('items'),
+            ], 200);
+        });
+    }
+
+    /**
+     * Seller deletes an offer, notifying every current buyer first.
+     */
+    public function destroy(Request $request, Offer $offer): JsonResponse
+    {
+        if ($offer->seller_id !== $request->user()->user_id) {
+            return response()->json([
+                'message' => 'Hanya penjual yang bisa menghapus offer ini.',
+            ], 403);
+        }
+
+        foreach ($offer->buyers as $buyer) {
+            $buyer->notify(new OfferDeletedNotification($offer));
+        }
+
+        $offer->delete();
+
+        return response()->json([
+            'message' => 'Offer deleted successfully.',
+        ], 200);
+    }
+
+    /**
+     * Buyer acknowledges a disruptive offer edit: either keep their order as-is,
+     * or leave the offer (same rollback as cancelOrder()).
+     */
+    public function respondToChanges(Request $request, Offer $offer): JsonResponse
+    {
+        $validated = $request->validate([
+            'action' => ['required', Rule::in(['keep', 'leave'])],
+        ]);
+
+        if ($validated['action'] === 'leave') {
+            return $this->cancelOrder($request, $offer);
+        }
+
+        $userId = $request->user()->user_id;
+        $offerBuyer = OfferBuyer::where('offer_id', $offer->offer_id)
+            ->where('buyer_id', $userId)
+            ->first();
+
+        if (! $offerBuyer) {
+            return response()->json([
+                'message' => 'Anda tidak memiliki pesanan di offer ini.',
+            ], 404);
+        }
+
+        return response()->json([
+            'message' => 'Pesanan Anda tetap dipertahankan.',
+        ], 200);
+    }
+
+    /**
+     * Uploads an image (item image or payment proof) to public storage and
+     * returns its public URL. Assumes `php artisan storage:link` has already
+     * been run so the `public` disk is web-accessible.
+     */
+    public function uploadImage(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'file' => ['required', 'image', 'mimes:jpg,jpeg,png', 'max:3072'],
+        ]);
+
+        $path = $validated['file']->store('uploads/items', 'public');
+
+        return response()->json([
+            'url' => Storage::disk('public')->url($path),
+        ], 200);
     }
 }

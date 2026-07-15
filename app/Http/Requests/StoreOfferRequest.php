@@ -24,6 +24,8 @@ class StoreOfferRequest extends FormRequest
             'closing_time' => ['required', 'date'],
             'arrival_time' => ['required', 'date', 'after_or_equal:closing_time'],
             'has_cod_payment' => ['boolean'],
+            'payment_method_ids' => ['sometimes', 'array'],
+            'payment_method_ids.*' => ['integer', 'exists:payment_methods,payment_method_id'],
             'items' => ['sometimes', 'array'],
             'items.*.item_name' => ['required_with:items', 'string', 'max:255'],
             'items.*.item_price' => ['required_with:items', 'numeric', 'min:0'],

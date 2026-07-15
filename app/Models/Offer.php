@@ -28,10 +28,10 @@ class Offer extends Model
     protected function casts(): array
     {
         return [
-            'closing_time' => 'datetime:Y-m-d H:i:s',
-            'arrival_time' => 'datetime:Y-m-d H:i:s',
-            'closed_at' => 'datetime:Y-m-d H:i:s',
-            'arrived_at' => 'datetime:Y-m-d H:i:s',
+            'closing_time' => 'datetime',
+            'arrival_time' => 'datetime',
+            'closed_at' => 'datetime',
+            'arrived_at' => 'datetime',
             'has_cod_payment' => 'boolean',
             'is_completed' => 'boolean',
             'latitude' => 'float',
@@ -104,7 +104,7 @@ class Offer extends Model
     public function buyers(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'offer_buyers', 'offer_id', 'buyer_id')
-            ->withPivot(['offer_buyer_id', 'is_verified', 'payment_proof_url', 'payment_submitted_at', 'verified_at', 'status'])
+            ->withPivot(['offer_buyer_id', 'is_confirmed', 'payment_proof_url', 'payment_submitted_at', 'confirmed_at'])
             ->withTimestamps();
     }
 

@@ -22,6 +22,9 @@ Route::get('/auth/google/pending-user', [GoogleAuthController::class, 'getPendin
 Route::post('/auth/google/register', [GoogleAuthController::class, 'register']);
 
 Route::get('/offers', [OfferController::class, 'index']);
+Route::middleware('auth')->get('/offers/mine', [OfferController::class, 'myOffers']);
+Route::get('/offers/{offer}', [OfferController::class, 'show']);
+Route::get('/offers/{offer}/payment-methods', [OfferController::class, 'getPaymentMethods']);
 
 Route::middleware('auth')->group(function () {
     Route::get('/user', function (Request $request) {
@@ -40,8 +43,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/offers/{offer}/submit-payment', [OfferController::class, 'submitPayment']);
     Route::get('/offers/{offer}/my-order', [OfferController::class, 'myOrder']);
     Route::get('/my-orders', [OfferController::class, 'myOrders']);
-    Route::get('/offers/{offer}', [OfferController::class, 'show']);
-    Route::get('/offers/{offer}/payment-methods', [OfferController::class, 'getPaymentMethods']);
+    Route::get('/offers/{offer}/orders', [OfferController::class, 'orders']);
+    Route::post('/offers/{offer}/orders/respond-to-changes', [OfferController::class, 'respondToChanges']);
+    Route::post('/offers/{offer}/orders/{offerBuyer}/confirm-payment', [OfferController::class, 'confirmPayment']);
+    Route::put('/offers/{offer}', [OfferController::class, 'update']);
+    Route::delete('/offers/{offer}', [OfferController::class, 'destroy']);
+    Route::post('/uploads/image', [OfferController::class, 'uploadImage']);
 
     Route::post('/auth/logout', function (Request $request) {
         Auth::logout();
@@ -64,7 +71,7 @@ Route::middleware('auth')->group(function () {
     Route::put('/requests/{id}', [RequestController::class, 'update']);
     Route::delete('/requests/{id}', [RequestController::class, 'destroy']);
     Route::post('/requests/{id}/vote', [RequestController::class, 'toggleVote']);
-    
+
     // Notification Routes
     Route::prefix('notifications')->group(function (): void {
         Route::get('/', [NotificationController::class, 'index']);
