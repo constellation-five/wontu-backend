@@ -23,6 +23,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
 class OfferController extends Controller
@@ -246,7 +247,7 @@ class OfferController extends Controller
 
         return response()->json([
             'message' => 'Offer berhasil ditutup.',
-            'offer' => $offer->fresh(),
+            'offer' => $offer->fresh(['items']),
         ], 200);
     }
 
@@ -277,7 +278,7 @@ class OfferController extends Controller
 
         return response()->json([
             'message' => 'Offer berhasil ditandai sebagai tiba.',
-            'offer' => $offer->fresh(),
+            'offer' => $offer->fresh(['items']),
         ], 200);
     }
 
@@ -662,9 +663,20 @@ class OfferController extends Controller
 
         $offerBuyer->buyer->notify(new PaymentConfirmedNotification($offer));
 
+        // Once every buyer on this (closed) offer is confirmed, stamp the
+        // moment for the Manage Offer timeline — only ever set once.
+        if ($offer->payments_confirmed_at === null
+            && $offer->closed_at !== null
+            && ! OfferBuyer::where('offer_id', $offer->offer_id)->where('is_confirmed', false)->exists()
+        ) {
+            $offer->payments_confirmed_at = now();
+            $offer->save();
+        }
+
         return response()->json([
             'message' => 'Pembayaran berhasil dikonfirmasi.',
             'offer_buyer' => $offerBuyer->fresh(),
+            'offer' => $offer->fresh(['items']),
         ], 200);
     }
 
@@ -693,16 +705,20 @@ class OfferController extends Controller
             ], 403);
         }
 
-        $validated = $request->validate([
+        $validated = Validator::make($request->all(), [
             'category' => ['required', Rule::in(['food', 'other'])],
             'merchant_name' => ['nullable', 'string', 'max:64'],
             'location_label' => ['nullable', 'string', 'max:255'],
             'location_lat' => ['required', 'numeric', 'between:-90,90'],
             'location_lng' => ['required', 'numeric', 'between:-180,180'],
             'closing_time' => ['required', 'date'],
-            'arrival_time' => ['required', 'date', 'after_or_equal:closing_time'],
+            // Full-datetime ordering only matters when both sides fall on
+            // the same day — see the after() closure below, which also
+            // covers the coarser "date must always be closing <= arrival"
+            // rule regardless of time-of-day.
+            'arrival_time' => ['required', 'date'],
             'has_cod_payment' => ['boolean'],
-            'items' => ['required', 'array'],
+            'items' => ['required', 'array', 'min:1'],
             'items.*.item_id' => ['nullable', 'integer', 'exists:items,item_id'],
             'items.*.item_name' => ['required', 'string', 'max:255'],
             'items.*.item_price' => ['required', 'numeric', 'min:0'],
@@ -711,7 +727,23 @@ class OfferController extends Controller
             'items.*.image_url' => ['nullable', 'string', 'url'],
             'payment_method_ids' => ['sometimes', 'array'],
             'payment_method_ids.*' => ['integer', 'exists:payment_methods,payment_method_id'],
-        ]);
+        ])->after(function ($validator) use ($request) {
+            $closing = $request->input('closing_time');
+            $arrival = $request->input('arrival_time');
+
+            if (! $closing || ! $arrival) {
+                return;
+            }
+
+            $closingTime = Carbon::parse($closing);
+            $arrivalTime = Carbon::parse($arrival);
+
+            if ($arrivalTime->toDateString() < $closingTime->toDateString()) {
+                $validator->errors()->add('arrival_time', 'Items must arrive on or after the offer closing date.');
+            } elseif ($arrivalTime->toDateString() === $closingTime->toDateString() && $arrivalTime->lt($closingTime)) {
+                $validator->errors()->add('arrival_time', 'On the same day, items must arrive at or after the offer closing time.');
+            }
+        })->validate();
 
         return DB::transaction(function () use ($validated, $offer, $request) {
             // Step 1: snapshot pre-edit state.

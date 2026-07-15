@@ -32,6 +32,7 @@ class Offer extends Model
             'arrival_time' => 'datetime',
             'closed_at' => 'datetime',
             'arrived_at' => 'datetime',
+            'payments_confirmed_at' => 'datetime',
             'has_cod_payment' => 'boolean',
             'is_completed' => 'boolean',
             'latitude' => 'float',
