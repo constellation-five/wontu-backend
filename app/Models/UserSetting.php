@@ -4,13 +4,15 @@ namespace App\Models;
 
 use App\Support\NotificationCategories;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Str;
 
 #[Fillable(['user_id', 'notifications', 'language', 'dark_mode'])]
 class UserSetting extends Model
 {
+    use HasUuids;
+
     protected $primaryKey = 'setting_id';
     public $incrementing = false;
     protected $keyType = 'string';
@@ -21,17 +23,6 @@ class UserSetting extends Model
             'notifications' => 'array',
             'dark_mode' => 'boolean',
         ];
-    }
-
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::creating(function ($model) {
-            if (empty($model->{$model->getKeyName()})) {
-                $model->{$model->getKeyName()} = (string) Str::uuid();
-            }
-        });
     }
 
     public function user(): BelongsTo
