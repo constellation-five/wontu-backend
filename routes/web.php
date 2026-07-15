@@ -6,6 +6,7 @@ use App\Http\Controllers\OfferController;
 use App\Http\Controllers\PaymentMethodController;
 use App\Http\Controllers\RequestController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SettingsController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -92,4 +93,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile/{userId}/following', [ProfileController::class, 'following']);
     Route::get('/profile/{userId}/rating-breakdown', [ProfileController::class, 'ratingBreakdown']);
     Route::post('/profile/{userId}/rating', [ProfileController::class, 'addRating']);
+
+    Route::get('/settings', [SettingsController::class, 'index']);
+    Route::put('/settings', [SettingsController::class, 'update']);
 });
