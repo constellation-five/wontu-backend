@@ -7,6 +7,7 @@ use App\Models\Offer;
 use App\Models\OfferBuyer;
 use App\Models\PaymentMethod;
 use App\Models\User;
+use App\Models\UserSetting;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
@@ -290,6 +291,16 @@ class OfferSeeder extends Seeder
                 'bank_name' => $dummy['bank_name'],
                 'account_name' => $dummy['name'],
                 'account_number' => $dummy['account_number'],
+            ]);
+
+            // Dummy emails aren't real inboxes — turn every notification
+            // category's email (and push) toggle off so nothing ever tries
+            // to send mail to them.
+            UserSetting::create([
+                'user_id' => $user->user_id,
+                'notifications' => collect(UserSetting::getDefaultNotifications())
+                    ->map(fn () => ['push' => false, 'email' => false])
+                    ->all(),
             ]);
 
             return $user;

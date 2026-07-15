@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\NotificationCategories;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -39,16 +40,14 @@ class UserSetting extends Model
     }
 
     /**
-     * Get default notification settings structure
+     * Get default notification settings structure — one entry per category
+     * in NotificationCategories, each of which gates a group of related
+     * notification classes (see NotificationCategories::all()).
      */
     public static function getDefaultNotifications(): array
     {
-        return [
-            'new-offers' => ['push' => false, 'email' => true],
-            'offer-updates' => ['push' => false, 'email' => false],
-            'expiring-offers' => ['push' => false, 'email' => false],
-            'new-messages' => ['push' => false, 'email' => true],
-            'account-activity' => ['push' => false, 'email' => false],
-        ];
+        return collect(NotificationCategories::all())
+            ->map(fn () => ['push' => false, 'email' => true])
+            ->all();
     }
 }
