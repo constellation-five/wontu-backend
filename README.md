@@ -42,7 +42,7 @@ php artisan key:generate
 5. Run migrations:
 
 ```bash
-php artisan migrate
+php artisan migrate --seed
 ```
 
 ## Running the Dev Server

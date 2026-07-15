@@ -48,7 +48,7 @@
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
-            "concurrently \"php artisan serve\" \"php artisan queue:work\" \"php artisan pail --timeout=0\" --names=server,queue,logs"
+            "concurrently \"php artisan serve\" \"php artisan queue:work\" \"php artisan reverb:start\" \"php artisan pail --timeout=0\" --names=server,queue,reverb,logs"
         ],
         "test": [
             "@php artisan config:clear --ansi",
