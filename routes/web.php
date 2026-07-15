@@ -50,6 +50,7 @@ Route::middleware('auth')->group(function () {
     Route::put('/offers/{offer}', [OfferController::class, 'update']);
     Route::delete('/offers/{offer}', [OfferController::class, 'destroy']);
     Route::post('/uploads/image', [OfferController::class, 'uploadImage']);
+    Route::post('/uploads/delete', [OfferController::class, 'deleteUpload']);
 
     Route::post('/auth/logout', function (Request $request) {
         Auth::logout();

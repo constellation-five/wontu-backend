@@ -974,4 +974,30 @@ class OfferController extends Controller
             'url' => Storage::disk('public')->url($path),
         ], 200);
     }
+
+    /**
+     * Deletes a previously-uploaded file that never ended up attached to
+     * anything — e.g. a payment-proof image uploaded via uploadImage() but
+     * abandoned when the buyer reloaded before clicking "Complete payment".
+     * Only ever touches paths under uploads/items on the public disk.
+     */
+    public function deleteUpload(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'url' => ['required', 'string'],
+        ]);
+
+        $marker = '/storage/';
+        $pos = strpos($validated['url'], $marker);
+
+        if ($pos !== false) {
+            $path = substr($validated['url'], $pos + strlen($marker));
+
+            if (str_starts_with($path, 'uploads/items/') && Storage::disk('public')->exists($path)) {
+                Storage::disk('public')->delete($path);
+            }
+        }
+
+        return response()->json(['message' => 'ok'], 200);
+    }
 }
