@@ -46,8 +46,13 @@ Route::middleware('auth')->group(function () {
     Route::post('/offers/{offer}/submit-payment', [OfferController::class, 'submitPayment']);
     Route::get('/offers/{offer}/my-order', [OfferController::class, 'myOrder']);
     Route::get('/my-orders', [OfferController::class, 'myOrders']);
-    Route::get('/offers/{offer}', [OfferController::class, 'show']);
-    Route::get('/offers/{offer}/payment-methods', [OfferController::class, 'getPaymentMethods']);
+    Route::get('/offers/{offer}/orders', [OfferController::class, 'orders']);
+    Route::post('/offers/{offer}/orders/respond-to-changes', [OfferController::class, 'respondToChanges']);
+    Route::post('/offers/{offer}/orders/{offerBuyer}/confirm-payment', [OfferController::class, 'confirmPayment']);
+    Route::put('/offers/{offer}', [OfferController::class, 'update']);
+    Route::delete('/offers/{offer}', [OfferController::class, 'destroy']);
+    Route::post('/uploads/image', [OfferController::class, 'uploadImage']);
+    Route::post('/uploads/delete', [OfferController::class, 'deleteUpload']);
     
     Route::post('/auth/logout', function (Request $request) {
         Auth::logout();
