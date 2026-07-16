@@ -24,6 +24,9 @@ Route::get('/auth/google/pending-user', [GoogleAuthController::class, 'getPendin
 Route::post('/auth/google/register', [GoogleAuthController::class, 'register']);
 
 Route::get('/offers', [OfferController::class, 'index']);
+Route::get('/requests', [RequestController::class, 'index']);
+Route::get('/requests/{id}', [RequestController::class, 'show']);
+
 Route::middleware('auth')->get('/offers/mine', [OfferController::class, 'myOffers']);
 Route::get('/offers/{offer}', [OfferController::class, 'show']);
 Route::get('/offers/{offer}/payment-methods', [OfferController::class, 'getPaymentMethods']);
@@ -32,6 +35,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+        
     // Offers Routes
     Route::post('/offers', [OfferController::class, 'store']);
     Route::post('/offers/{offer}/join', [OfferController::class, 'join']);
@@ -52,23 +56,23 @@ Route::middleware('auth')->group(function () {
     Route::delete('/offers/{offer}', [OfferController::class, 'destroy']);
     Route::post('/uploads/image', [OfferController::class, 'uploadImage']);
     Route::post('/uploads/delete', [OfferController::class, 'deleteUpload']);
-
+    
     Route::post('/auth/logout', function (Request $request) {
         Auth::logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-
+        
         return response()->json(['message' => 'Successfully logged out']);
     });
-
+    
     // Payment Method Routes
     Route::get('/payment-methods', [PaymentMethodController::class, 'index']);
     Route::post('/payment-methods', [PaymentMethodController::class, 'store']);
     Route::put('/payment-methods/{id}', [PaymentMethodController::class, 'update']);
     Route::delete('/payment-methods/{id}', [PaymentMethodController::class, 'destroy']);
     Route::get('/test-detail/{offer}', [OfferController::class, 'show']);
-
+    
     // Request Routes
     Route::post('/requests', [RequestController::class, 'store']);
     Route::put('/requests/{id}', [RequestController::class, 'update']);
@@ -106,3 +110,4 @@ Route::middleware('auth')->group(function () {
     Route::get('/settings', [SettingsController::class, 'index']);
     Route::put('/settings', [SettingsController::class, 'update']);
 });
+            
