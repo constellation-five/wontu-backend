@@ -21,7 +21,7 @@
     "require-dev": {
         "fakerphp/faker": "^1.23",
         "laravel/boost": "*",
-        "laravel/pail": "^1.2.5",
+        "laravel/pail": "^1.2",
         "laravel/pint": "^1.27",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.6",
@@ -47,7 +47,8 @@
             "@php artisan migrate --force"
         ],
         "dev": [
-            "concurrently \"php artisan serve\" \"php artisan queue:work\""
+            "Composer\\Config::disableProcessTimeout",
+            "concurrently \"php artisan serve\" \"php artisan queue:work\" \"php artisan reverb:start\" \"php artisan pail --timeout=0\" --names=server,queue,reverb,logs"
         ],
         "test": [
             "@php artisan config:clear --ansi",
