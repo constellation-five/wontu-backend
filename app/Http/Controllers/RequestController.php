@@ -65,17 +65,23 @@ class RequestController extends Controller
             'location_lng' => 'nullable|numeric',
         ]);
 
+        $userId = Auth::user()->user_id;
+
         $newRequest = RequestModel::create([
-            'requester_id' => Auth::user()->user_id,
+            'requester_id' => $userId,
             'item_name' => $validated['item_name'],
             'category' => $validated['category'],
             'arrival_time' => $validated['arrival_time'],
             'location_label' => $validated['location_label'] ?? null,
-            // Sama seperti di OfferController, cek jika lat/lng dikirim
             'location' => isset($validated['location_lat'], $validated['location_lng']) 
                 ? RequestModel::makePoint($validated['location_lat'], $validated['location_lng']) 
                 : null,
-            'total_votes' => 0
+            'total_votes' => 1
+        ]);
+
+        RequestVoter::create([
+            'request_id' => $newRequest->request_id,
+            'user_id' => $userId
         ]);
 
         return response()->json([
@@ -139,17 +145,16 @@ class RequestController extends Controller
         $userId = Auth::user()->user_id;
         $requestItem = RequestModel::findOrFail($id);
 
-        // Coba hapus langsung menggunakan Query Builder
         $deleted = RequestVoter::where('user_id', $userId)
                                ->where('request_id', $id)
                                ->delete();
 
         if ($deleted) {
-            // Jika berhasil dihapus berarti sedang Unlove / Cancel Vote
+            // Unlove / Cancel Vote
             $requestItem->decrement('total_votes');
             $message = 'Cancel Vote';
         } else {
-            // Jika tidak ada yang dihapus berarti sedang Love / Vote
+            // Love / Vote
             RequestVoter::create([
                 'request_id' => $id,
                 'user_id' => $userId
@@ -161,6 +166,17 @@ class RequestController extends Controller
         return response()->json([
             'message' => $message, 
             'total_votes' => $requestItem->total_votes
+        ], 200);
+    }
+
+    // GET SINGLE REQUEST
+    public function show($id): JsonResponse
+    {
+        $requestItem = RequestModel::findOrFail($id);
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $requestItem
         ], 200);
     }
 }

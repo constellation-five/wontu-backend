@@ -24,6 +24,8 @@ Route::post('/auth/google/register', [GoogleAuthController::class, 'register']);
 
 Route::get('/offers', [OfferController::class, 'index']);
 Route::get('/requests', [RequestController::class, 'index']);
+Route::get('/requests/{id}', [RequestController::class, 'show']);
+
 Route::middleware('auth')->get('/offers/mine', [OfferController::class, 'myOffers']);
 Route::get('/offers/{offer}', [OfferController::class, 'show']);
 Route::get('/offers/{offer}/payment-methods', [OfferController::class, 'getPaymentMethods']);
