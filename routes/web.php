@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\GoogleAuthController;
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OfferController;
 use App\Http\Controllers\PaymentMethodController;
@@ -73,6 +74,13 @@ Route::middleware('auth')->group(function () {
     Route::put('/requests/{id}', [RequestController::class, 'update']);
     Route::delete('/requests/{id}', [RequestController::class, 'destroy']);
     Route::post('/requests/{id}/vote', [RequestController::class, 'toggleVote']);
+
+    // Chat Routes
+    Route::get('/conversations/private/{userId}', [ChatController::class, 'privateConversation']);
+    Route::get('/offers/{offer}/conversation', [ChatController::class, 'offerConversation']);
+    Route::get('/conversations/{conversation}', [ChatController::class, 'show']);
+    Route::get('/conversations/{conversation}/messages', [ChatController::class, 'messages']);
+    Route::post('/conversations/{conversation}/messages', [ChatController::class, 'sendMessage']);
 
     // Notification Routes
     Route::prefix('notifications')->group(function (): void {
