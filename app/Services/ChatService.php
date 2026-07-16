@@ -1,0 +1,146 @@
+<?php
+
+namespace App\Services;
+
+use App\Events\ChatMessageBroadcast;
+use App\Models\Conversation;
+use App\Models\Message;
+use App\Models\Offer;
+use App\Models\User;
+
+class ChatService
+{
+    public function findOrCreatePrivateConversation(User $a, User $b): Conversation
+    {
+        $existing = Conversation::query()
+            ->where('type', 'private')
+            ->whereHas('participants', fn ($q) => $q->where('user_id', $a->user_id))
+            ->whereHas('participants', fn ($q) => $q->where('user_id', $b->user_id))
+            ->first();
+
+        if ($existing) {
+            return $existing;
+        }
+
+        $conversation = Conversation::create(['type' => 'private']);
+        $this->addParticipant($conversation, $a);
+        $this->addParticipant($conversation, $b);
+
+        return $conversation;
+    }
+
+    public function getOrCreateGroupConversation(Offer $offer): Conversation
+    {
+        $conversation = $offer->conversation()->first();
+
+        if ($conversation) {
+            return $conversation;
+        }
+
+        $conversation = Conversation::create([
+            'type' => 'offer_group',
+            'offer_id' => $offer->offer_id,
+        ]);
+
+        $this->addParticipant($conversation, $offer->seller, 'owner');
+
+        foreach ($offer->buyers as $buyer) {
+            $this->addParticipant($conversation, $buyer);
+        }
+
+        return $conversation;
+    }
+
+    public function addParticipant(Conversation $conversation, User $user, string $role = 'member'): void
+    {
+        $participant = $conversation->participants()->where('user_id', $user->user_id)->first();
+
+        if ($participant) {
+            if ($participant->left_at !== null) {
+                $participant->left_at = null;
+                $participant->joined_at = now();
+                $participant->save();
+            }
+
+            return;
+        }
+
+        $conversation->participants()->create([
+            'user_id' => $user->user_id,
+            'role' => $role,
+            'joined_at' => now(),
+        ]);
+    }
+
+    public function removeParticipant(Conversation $conversation, User $user): void
+    {
+        $conversation->participants()
+            ->where('user_id', $user->user_id)
+            ->whereNull('left_at')
+            ->update(['left_at' => now()]);
+    }
+
+    public function postMessage(
+        Conversation $conversation,
+        ?User $sender,
+        ?string $body,
+        ?string $imageUrl = null,
+        ?User $target = null,
+    ): Message {
+        $message = $conversation->messages()->create([
+            'sender_id' => $sender?->user_id,
+            'target_user_id' => $target?->user_id,
+            'body' => $body,
+            'image_url' => $imageUrl,
+            'type' => 'text',
+        ]);
+
+        $this->broadcast($conversation, $message->load('sender', 'target'));
+
+        return $message;
+    }
+
+    public function postSystemMessage(
+        Conversation $conversation,
+        string $title,
+        string $description,
+        string $icon = 'info',
+        string $type = 'info',
+        array $extraMetadata = [],
+    ): Message {
+        $message = $conversation->messages()->create([
+            'sender_id' => null,
+            'target_user_id' => null,
+            'body' => null,
+            'type' => 'system',
+            'metadata' => array_merge([
+                'title' => $title,
+                'description' => $description,
+                'icon' => $icon,
+                'notification_type' => $type,
+            ], $extraMetadata),
+        ]);
+
+        $this->broadcast($conversation, $message);
+
+        return $message;
+    }
+
+    private function broadcast(Conversation $conversation, Message $message): void
+    {
+        if ($message->target_user_id !== null) {
+            $recipientIds = array_values(array_filter([
+                $message->sender_id,
+                $message->target_user_id,
+            ]));
+        } else {
+            $recipientIds = $conversation->activeParticipants()->pluck('user_id')->all();
+        }
+
+        if (empty($recipientIds)) {
+            return;
+        }
+
+        ChatMessageBroadcast::dispatch($message, $recipientIds);
+    }
+}

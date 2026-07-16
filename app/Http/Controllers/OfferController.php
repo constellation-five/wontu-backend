@@ -19,6 +19,7 @@ use App\Notifications\OrderPlacedNotification;
 use App\Notifications\OrderUpdatedNotification;
 use App\Notifications\PaymentConfirmedNotification;
 use App\Notifications\PaymentProofUploadedNotification;
+use App\Services\ChatService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -32,6 +33,8 @@ class OfferController extends Controller
      * Offers only show up for buyers within this many meters of the offer's location.
      */
     private const NEARBY_RADIUS_METERS = 200;
+
+    public function __construct(private readonly ChatService $chatService) {}
 
     /**
      * Validasi apakah seller mencoba memesan di offer sendiri
@@ -143,6 +146,8 @@ class OfferController extends Controller
 
         $offer->paymentMethods()->sync($validated['payment_method_ids'] ?? []);
 
+        $this->chatService->getOrCreateGroupConversation($offer);
+
         return response()->json([
             'message' => 'Offer created successfully.',
             'offer' => $offer->load('items'),
@@ -245,6 +250,15 @@ class OfferController extends Controller
         $offer->closed_at = now();
         $offer->save();
 
+        $conversation = $this->chatService->getOrCreateGroupConversation($offer);
+        $this->chatService->postSystemMessage(
+            $conversation,
+            'Offer Closed',
+            "The {$offer->merchant_name} offer has been closed by the seller and is no longer accepting orders.",
+            'lock',
+            'info',
+        );
+
         return response()->json([
             'message' => 'Offer berhasil ditutup.',
             'offer' => $offer->fresh(['items']),
@@ -275,6 +289,17 @@ class OfferController extends Controller
         foreach ($offer->buyers as $buyer) {
             $buyer->notify(new ItemsArrivedNotification($offer));
         }
+
+        $conversation = $this->chatService->getOrCreateGroupConversation($offer->fresh());
+        $chatClosesAt = $conversation->chatClosesAt();
+        $this->chatService->postSystemMessage(
+            $conversation,
+            'Items Have Arrived',
+            "The items for the {$offer->merchant_name} offer have arrived. This chat will close to new messages on {$chatClosesAt->toDayDateTimeString()}.",
+            'local_shipping',
+            'success',
+            ['chat_closes_at' => $chatClosesAt->toISOString()],
+        );
 
         return response()->json([
             'message' => 'Offer berhasil ditandai sebagai tiba.',
@@ -347,6 +372,16 @@ class OfferController extends Controller
             ]);
 
             $offer->seller->notify(new BuyerJoinedNotification($request->user(), $offer));
+
+            $conversation = $this->chatService->getOrCreateGroupConversation($offer);
+            $this->chatService->addParticipant($conversation, $request->user());
+            $this->chatService->postSystemMessage(
+                $conversation,
+                'Buyer Joined',
+                "{$request->user()->name} joined the {$offer->merchant_name} offer.",
+                'group_add',
+                'info',
+            );
         }
 
         return response()->json([
@@ -378,6 +413,15 @@ class OfferController extends Controller
         foreach ($offer->buyers as $buyer) {
             $buyer->notify(new OfferCompletedNotification($offer));
         }
+
+        $conversation = $this->chatService->getOrCreateGroupConversation($offer);
+        $this->chatService->postSystemMessage(
+            $conversation,
+            'Offer Completed',
+            "The {$offer->merchant_name} offer has been marked as completed.",
+            'check_circle',
+            'success',
+        );
 
         return response()->json([
             'message' => 'Offer berhasil diselesaikan.',
@@ -577,6 +621,16 @@ class OfferController extends Controller
             $offerBuyer->delete();
 
             $offer->seller->notify(new OrderCancelledNotification($request->user(), $offer));
+
+            $conversation = $this->chatService->getOrCreateGroupConversation($offer);
+            $this->chatService->removeParticipant($conversation, $request->user());
+            $this->chatService->postSystemMessage(
+                $conversation,
+                'Buyer Left',
+                "{$request->user()->name} left the {$offer->merchant_name} offer.",
+                'group_remove',
+                'info',
+            );
 
             return response()->json([
                 'message' => 'Pesanan berhasil dibatalkan dan stok dikembalikan.',
@@ -929,6 +983,15 @@ class OfferController extends Controller
                 $disruptive = ! empty($changes);
                 $offerBuyerModel->buyer?->notify(new OfferEditedNotification($offer, $disruptive, $changes));
             }
+
+            $conversation = $this->chatService->getOrCreateGroupConversation($offer);
+            $this->chatService->postSystemMessage(
+                $conversation,
+                'Offer Updated',
+                "The {$offer->merchant_name} offer was updated by the seller.",
+                'edit',
+                'info',
+            );
 
             return response()->json([
                 'message' => 'Offer updated successfully.',

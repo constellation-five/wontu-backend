@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Query\Expression;
 use Illuminate\Support\Facades\DB;
 
@@ -112,5 +113,10 @@ class Offer extends Model
     public function offerBuyers(): HasMany
     {
         return $this->hasMany(OfferBuyer::class, 'offer_id', 'offer_id');
+    }
+
+    public function conversation(): HasOne
+    {
+        return $this->hasOne(Conversation::class, 'offer_id', 'offer_id')->where('type', 'offer_group');
     }
 }
