@@ -21,24 +21,24 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.4'
+          php-version: "8.4"
 
       - name: Check if composer.json exists
         id: check_files
         uses: andstor/file-existence-action@v1
         with:
-          files: 'composer.json'
+          files: "composer.json"
 
       - name: Run composer install if composer.json exists
         if: steps.check_files.outputs.files_exists == 'true'
         run: composer validate --no-check-publish && composer install --prefer-dist --no-progress
-
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: php-app
           path: .
+          include-hidden-files: true
 
   deploy:
     runs-on: ubuntu-latest
@@ -60,67 +60,10 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_1E4FB04532104FDA93785C4ED06637D1 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_FFC3E817ECBB4107838E6AFAB3992CA2 }}
 
-      - name: 'Deploy to Azure Web App'
+      - name: "Deploy to Azure Web App"
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
         with:
-          app-name: 'wontu-backend'
-          slot-name: 'Production'
+          app-name: "wontu-backend"
+          slot-name: "Production"
           package: .
-
-      - name: Run database migrations
-        run: |
-          set -euo pipefail
-
-          creds=$(az webapp deployment list-publishing-credentials \
-            --name wontu-backend \
-            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
-            --query "{user:publishingUserName,pass:publishingPassword}" -o json)
-          scm_user=$(echo "$creds" | jq -r .user)
-          scm_pass=$(echo "$creds" | jq -r .pass)
-
-          # Azure now assigns a random-suffixed default hostname per app
-          # instead of the flat <app-name>.azurewebsites.net pattern, so the SCM/Kudu
-          # host is resolved dynamically rather than hardcoded — it's the same
-          # hostname with "scm." inserted before the first dot.
-          default_host=$(az webapp show \
-            --name wontu-backend \
-            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
-            --query defaultHostName -o tsv)
-          scm_host="${default_host/./.scm.}"
-
-          # Kudu's SCM site restarts alongside the app on deploy, so give it a
-          # few retries to come back up before assuming migrations failed.
-          # `set -e` would otherwise abort on curl's own exit code (e.g. a transient
-          # DNS/connect failure) before the loop gets a chance to retry, so curl
-          # failures are captured explicitly here instead of letting `set -e` fire.
-          for attempt in 1 2 3 4 5; do
-            set +e
-            response=$(curl -s -w '\n%{http_code}' -u "$scm_user:$scm_pass" \
-              -X POST "https://${scm_host}/api/command" \
-              -H "Content-Type: application/json" \
-              -d '{"command":"php artisan migrate --force","dir":"site/wwwroot"}')
-            curl_exit=$?
-            set -e
-
-            if [ "$curl_exit" -ne 0 ]; then
-              echo "curl failed (attempt $attempt, curl exit $curl_exit), retrying in 10s..."
-              sleep 10
-              continue
-            fi
-
-            status="${response##*$'\n'}"
-            body="${response%$'\n'*}"
-
-            if [ "$status" = "200" ]; then
-              echo "$body"
-              exit 0
-            fi
-
-            echo "Migration command failed (attempt $attempt, HTTP $status), retrying in 10s..."
-            echo "$body"
-            sleep 10
-          done
-
-          echo "Migration command did not succeed after 5 attempts."
-          exit 1

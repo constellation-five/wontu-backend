@@ -1,9 +1,13 @@
 #!/bin/bash
 cp /home/site/wwwroot/default /etc/nginx/sites-available/default
 
-service nginx reload
+cd /home/site/wwwroot
+mkdir -p storage/framework/{cache/data,sessions,testing,views} storage/logs bootstrap/cache
+chmod -R 775 storage bootstrap/cache
 
-mkdir -p /home/site/wwwroot/storage/logs
+php artisan migrate --force --no-interaction || echo "WARNING: migration step failed, check logs above. Continuing app startup."
+
+service nginx reload
 
 nohup php /home/site/wwwroot/artisan queue:work > /home/site/wwwroot/storage/logs/queue.log 2>&1 &
 
