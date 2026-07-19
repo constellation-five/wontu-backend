@@ -380,7 +380,6 @@ class OfferController extends Controller
             $offer->seller->notify(new BuyerJoinedNotification($request->user(), $offer));
 
             $conversation = $this->chatService->getOrCreateGroupConversation($offer);
-            $this->chatService->addParticipant($conversation, $request->user());
             $this->chatService->postSystemMessage(
                 $conversation,
                 'Buyer Joined',
@@ -488,6 +487,16 @@ class OfferController extends Controller
                     'notes' => $orderItem['notes'] ?? null,
                 ]);
             }
+
+            $conversation = $this->chatService->getOrCreateGroupConversation($offer);
+            $this->chatService->postSystemMessage(
+                $conversation,
+                'Buyer Joined',
+                "{$request->user()->name} joined the {$offer->merchant_name} offer.",
+                'group_add',
+                'info',
+            );
+
             $offer->seller->notify(new OrderPlacedNotification($request->user(), $offer));
 
             return response()->json([
@@ -629,7 +638,6 @@ class OfferController extends Controller
             $offer->seller->notify(new OrderCancelledNotification($request->user(), $offer));
 
             $conversation = $this->chatService->getOrCreateGroupConversation($offer);
-            $this->chatService->removeParticipant($conversation, $request->user());
             $this->chatService->postSystemMessage(
                 $conversation,
                 'Buyer Left',

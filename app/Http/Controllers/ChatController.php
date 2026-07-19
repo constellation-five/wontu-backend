@@ -70,11 +70,21 @@ class ChatController extends Controller
             return $error;
         }
 
-        $messages = $conversation->messages()
+        $messagesQuery = $conversation->messages()
             ->visibleTo($request->user()->user_id)
-            ->with('sender', 'target')
-            ->orderBy('created_at')
-            ->get();
+            ->with('sender', 'target');
+
+        if ($conversation->type === 'offer_group' && $conversation->offer) {
+            $offerBuyer = \App\Models\OfferBuyer::where('offer_id', $conversation->offer_id)
+                ->where('buyer_id', $request->user()->user_id)
+                ->first();
+            
+            if ($offerBuyer) {
+                $messagesQuery->where('created_at', '>=', $offerBuyer->created_at);
+            }
+        }
+
+        $messages = $messagesQuery->orderBy('created_at')->get();
 
         return response()->json(MessageResource::collection($messages));
     }
@@ -105,7 +115,12 @@ class ChatController extends Controller
         if (! empty($validated['target_user_id'])) {
             $target = User::findOrFail($validated['target_user_id']);
 
-            $isParticipant = $conversation->participants()->where('user_id', $target->user_id)->exists();
+            if ($conversation->type === 'offer_group' && $conversation->offer) {
+                $isParticipant = $conversation->offer->seller_id === $target->user_id || 
+                                 $conversation->offer->buyers()->where('users.user_id', $target->user_id)->exists();
+            } else {
+                $isParticipant = $conversation->participants()->where('user_id', $target->user_id)->exists();
+            }
             if (! $isParticipant) {
                 return response()->json(['message' => 'The selected recipient is not part of this chat.'], 422);
             }
@@ -132,7 +147,12 @@ class ChatController extends Controller
     {
         $userId = $request->user()->user_id;
 
-        $isParticipant = $conversation->participants()->where('user_id', $userId)->exists();
+        if ($conversation->type === 'offer_group' && $conversation->offer) {
+            $isParticipant = $conversation->offer->seller_id === $userId || 
+                             $conversation->offer->buyers()->where('users.user_id', $userId)->exists();
+        } else {
+            $isParticipant = $conversation->participants()->where('user_id', $userId)->exists();
+        }
 
         if (! $isParticipant) {
             return response()->json(['message' => 'You do not have access to this chat.'], 403);
