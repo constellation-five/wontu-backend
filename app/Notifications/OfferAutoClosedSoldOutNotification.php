@@ -46,7 +46,7 @@ class OfferAutoClosedSoldOutNotification extends Notification implements ShouldB
             'description' => "Your {$this->offer->merchant_name} offer reached its closing time fully sold out and has been closed automatically.",
             'icon' => 'inventory_2',
             'notification_type' => 'success',
-            'action_url' => "/offers/{$this->offer->offer_id}/manage",
+            'action_url' => "/offers/{$this->offer->offer_id}",
         ];
     }
 }

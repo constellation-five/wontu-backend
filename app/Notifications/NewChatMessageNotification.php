@@ -55,7 +55,7 @@ class NewChatMessageNotification extends Notification implements ShouldQueue
             'description' => str($preview)->limit(100),
             'icon' => 'chat',
             'notification_type' => 'info',
-            'action_url' => '/offers/' . $this->message->conversation->offer_id . '/chat',
+            'action_url' => $this->message->conversation->type === 'offer_group' ? '/offers/' . $this->message->conversation->offer_id . '/chat' : '/chat/' . $this->message->conversation->id,
         ];
     }
 }

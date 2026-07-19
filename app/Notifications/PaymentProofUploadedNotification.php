@@ -48,7 +48,7 @@ class PaymentProofUploadedNotification extends Notification implements ShouldBro
             'description' => "{$this->buyer->name} uploaded a payment proof for your {$this->offer->merchant_name} offer.",
             'icon' => 'payments',
             'notification_type' => 'info',
-            'action_url' => "/offers/{$this->offer->offer_id}/manage",
+            'action_url' => "/offers/{$this->offer->offer_id}",
         ];
     }
 }
