@@ -42,12 +42,6 @@ class ChatService
             'offer_id' => $offer->offer_id,
         ]);
 
-        $this->addParticipant($conversation, $offer->seller, 'owner');
-
-        foreach ($offer->buyers as $buyer) {
-            $this->addParticipant($conversation, $buyer);
-        }
-
         return $conversation;
     }
 
@@ -134,7 +128,13 @@ class ChatService
                 $message->target_user_id,
             ]));
         } else {
-            $recipientIds = $conversation->activeParticipants()->pluck('user_id')->all();
+            if ($conversation->type === 'offer_group' && $conversation->offer) {
+                $recipientIds = $conversation->offer->buyers()->pluck('users.user_id')->all();
+                $recipientIds[] = $conversation->offer->seller_id;
+                $recipientIds = array_values(array_unique($recipientIds));
+            } else {
+                $recipientIds = $conversation->activeParticipants()->pluck('user_id')->all();
+            }
         }
 
         if (empty($recipientIds)) {
@@ -142,5 +142,15 @@ class ChatService
         }
 
         ChatMessageBroadcast::dispatch($message, $recipientIds);
+
+        if ($message->type !== 'system') {
+            $notifyIds = array_diff($recipientIds, [$message->sender_id]);
+            if (!empty($notifyIds)) {
+                $usersToNotify = \App\Models\User::whereIn('user_id', $notifyIds)->get();
+                foreach ($usersToNotify as $user) {
+                    $user->notify(new \App\Notifications\NewChatMessageNotification($message));
+                }
+            }
+        }
     }
 }

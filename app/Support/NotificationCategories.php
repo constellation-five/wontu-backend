@@ -19,6 +19,7 @@ use App\Notifications\OrderUpdatedNotification;
 use App\Notifications\PaymentConfirmedNotification;
 use App\Notifications\PaymentProofUploadedNotification;
 use App\Notifications\UserFollowedNotification;
+use App\Notifications\NewChatMessageNotification;
 use Illuminate\Notifications\Notification;
 
 /**
@@ -80,6 +81,13 @@ class NotificationCategories
                 'description' => 'Someone follows your profile.',
                 'notifications' => [
                     UserFollowedNotification::class,
+                ],
+            ],
+            'chat-messages' => [
+                'label' => 'Chat messages',
+                'description' => 'You receive a new message in a group or private chat.',
+                'notifications' => [
+                    NewChatMessageNotification::class,
                 ],
             ],
         ];

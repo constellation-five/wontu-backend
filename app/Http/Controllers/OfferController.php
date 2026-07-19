@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\OfferUpdated;
 use App\Http\Requests\StoreOfferRequest;
-use Carbon\Carbon;
 use App\Models\Item;
 use App\Models\Offer;
 use App\Models\OfferBuyer;
@@ -20,6 +20,7 @@ use App\Notifications\OrderUpdatedNotification;
 use App\Notifications\PaymentConfirmedNotification;
 use App\Notifications\PaymentProofUploadedNotification;
 use App\Services\ChatService;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -101,7 +102,10 @@ class OfferController extends Controller
             'lng' => ['sometimes', 'numeric', 'between:-180,180', 'required_with:lat'],
         ]);
 
-        $offers = Offer::with(['items', 'seller'])
+        $offers = Offer::with(['items', 'seller' => function ($query) {
+            $query->withAvg('receivedRatings', 'rating')
+                ->withCount('receivedRatings');
+        }])
             ->withCoordinates()
             ->whereNull('closed_at')
             ->when($search, function ($query, $search) {
@@ -156,7 +160,10 @@ class OfferController extends Controller
 
     public function show(Offer $offer)
     {
-        $offer = Offer::withCoordinates()->with(['items', 'seller'])->findOrFail($offer->offer_id);
+        $offer = Offer::withCoordinates()->with(['items', 'seller' => function ($query) {
+            $query->withAvg('receivedRatings', 'rating')
+                ->withCount('receivedRatings');
+        }])->findOrFail($offer->offer_id);
 
         return response()->json($offer);
     }
@@ -259,6 +266,8 @@ class OfferController extends Controller
             'info',
         );
 
+        broadcast(new OfferUpdated($offer->offer_id));
+
         return response()->json([
             'message' => 'Offer berhasil ditutup.',
             'offer' => $offer->fresh(['items']),
@@ -285,6 +294,8 @@ class OfferController extends Controller
 
         $offer->arrived_at = now();
         $offer->save();
+
+        broadcast(new \App\Events\OfferUpdated($offer->offer_id));
 
         foreach ($offer->buyers as $buyer) {
             $buyer->notify(new ItemsArrivedNotification($offer));
@@ -336,6 +347,8 @@ class OfferController extends Controller
         }
         $offerBuyer->save();
 
+        broadcast(new \App\Events\OfferUpdated($offer->offer_id));
+
         $offer->seller->notify(new PaymentProofUploadedNotification($request->user(), $offer));
 
         return response()->json([
@@ -374,7 +387,6 @@ class OfferController extends Controller
             $offer->seller->notify(new BuyerJoinedNotification($request->user(), $offer));
 
             $conversation = $this->chatService->getOrCreateGroupConversation($offer);
-            $this->chatService->addParticipant($conversation, $request->user());
             $this->chatService->postSystemMessage(
                 $conversation,
                 'Buyer Joined',
@@ -423,6 +435,8 @@ class OfferController extends Controller
             'success',
         );
 
+        broadcast(new OfferUpdated($offer->offer_id));
+
         return response()->json([
             'message' => 'Offer berhasil diselesaikan.',
             'offer' => $offer->fresh(),
@@ -431,6 +445,11 @@ class OfferController extends Controller
 
     public function placeOrder(Request $request, Offer $offer): JsonResponse
     {
+        if ($offer->closed_at) {
+            return response()->json([
+                'message' => 'Offer sudah ditutup. Anda tidak dapat membuat pesanan baru.',
+            ], 403);
+        }
         $userId = $request->user()->user_id;
         $validated = $request->validate([
             'items' => 'required|array',
@@ -482,7 +501,19 @@ class OfferController extends Controller
                     'notes' => $orderItem['notes'] ?? null,
                 ]);
             }
+
+            $conversation = $this->chatService->getOrCreateGroupConversation($offer);
+            $this->chatService->postSystemMessage(
+                $conversation,
+                'Buyer Joined',
+                "{$request->user()->name} joined the {$offer->merchant_name} offer.",
+                'group_add',
+                'info',
+            );
+
             $offer->seller->notify(new OrderPlacedNotification($request->user(), $offer));
+
+            \Illuminate\Support\Facades\DB::afterCommit(fn () => broadcast(new OfferUpdated($offer->offer_id)));
 
             return response()->json([
                 'message' => 'Pesanan berhasil diproses dan Anda telah bergabung.',
@@ -493,6 +524,11 @@ class OfferController extends Controller
 
     public function updateOrder(Request $request, Offer $offer): JsonResponse
     {
+        if ($offer->closed_at) {
+            return response()->json([
+                'message' => 'Offer sudah ditutup. Anda tidak dapat mengubah pesanan.',
+            ], 403);
+        }
         $validated = $request->validate([
             'items' => 'required|array',
             'items.*.item_id' => 'required|integer|exists:items,item_id',
@@ -511,6 +547,8 @@ class OfferController extends Controller
             }
 
             $offer->seller->notify(new OrderUpdatedNotification($request->user(), $offer));
+
+            \Illuminate\Support\Facades\DB::afterCommit(fn () => broadcast(new OfferUpdated($offer->offer_id)));
 
             return response()->json([
                 'message' => 'Pesanan berhasil diupdate.',
@@ -583,6 +621,8 @@ class OfferController extends Controller
 
             $offer->seller->notify(new OrderUpdatedNotification($request->user(), $offer));
 
+            \Illuminate\Support\Facades\DB::afterCommit(fn () => broadcast(new OfferUpdated($offer->offer_id)));
+
             return response()->json([
                 'message' => 'Pesanan berhasil diproses.',
                 'offer' => $offer->fresh()->load('items', 'buyers'),
@@ -592,6 +632,11 @@ class OfferController extends Controller
 
     public function cancelOrder(Request $request, Offer $offer): JsonResponse
     {
+        if ($offer->closed_at) {
+            return response()->json([
+                'message' => 'Offer sudah ditutup. Anda tidak dapat membatalkan pesanan.',
+            ], 403);
+        }
         $userId = $request->user()->user_id;
 
         return DB::transaction(function () use ($offer, $userId, $request) {
@@ -623,7 +668,6 @@ class OfferController extends Controller
             $offer->seller->notify(new OrderCancelledNotification($request->user(), $offer));
 
             $conversation = $this->chatService->getOrCreateGroupConversation($offer);
-            $this->chatService->removeParticipant($conversation, $request->user());
             $this->chatService->postSystemMessage(
                 $conversation,
                 'Buyer Left',
@@ -631,6 +675,8 @@ class OfferController extends Controller
                 'group_remove',
                 'info',
             );
+
+            \Illuminate\Support\Facades\DB::afterCommit(fn () => broadcast(new OfferUpdated($offer->offer_id)));
 
             return response()->json([
                 'message' => 'Pesanan berhasil dibatalkan dan stok dikembalikan.',
@@ -727,6 +773,8 @@ class OfferController extends Controller
             $offer->save();
         }
 
+        broadcast(new OfferUpdated($offer->offer_id));
+
         return response()->json([
             'message' => 'Pembayaran berhasil dikonfirmasi.',
             'offer_buyer' => $offerBuyer->fresh(),
@@ -753,6 +801,11 @@ class OfferController extends Controller
      */
     public function update(Request $request, Offer $offer): JsonResponse
     {
+        if ($offer->closed_at) {
+            return response()->json([
+                'message' => 'Offer sudah ditutup. Anda tidak dapat mengubah detail offer.',
+            ], 403);
+        }
         if ($offer->seller_id !== $request->user()->user_id) {
             return response()->json([
                 'message' => 'Hanya penjual yang bisa mengubah offer ini.',
@@ -799,7 +852,7 @@ class OfferController extends Controller
             }
         })->validate();
 
-        return DB::transaction(function () use ($validated, $offer, $request) {
+        return DB::transaction(function () use ($validated, $offer) {
             // Step 1: snapshot pre-edit state.
             $oldItems = $offer->items()->get()->keyBy('item_id');
             $oldOfferBuyers = OfferBuyer::where('offer_id', $offer->offer_id)
@@ -993,6 +1046,8 @@ class OfferController extends Controller
                 'info',
             );
 
+            \Illuminate\Support\Facades\DB::afterCommit(fn () => broadcast(new OfferUpdated($offer->offer_id)));
+
             return response()->json([
                 'message' => 'Offer updated successfully.',
                 'offer' => $offer->fresh()->load('items'),
@@ -1005,6 +1060,11 @@ class OfferController extends Controller
      */
     public function destroy(Request $request, Offer $offer): JsonResponse
     {
+        if ($offer->closed_at) {
+            return response()->json([
+                'message' => 'Offer sudah ditutup. Anda tidak dapat menghapus offer ini.',
+            ], 403);
+        }
         if ($offer->seller_id !== $request->user()->user_id) {
             return response()->json([
                 'message' => 'Hanya penjual yang bisa menghapus offer ini.',
@@ -1015,7 +1075,10 @@ class OfferController extends Controller
             $buyer->notify(new OfferDeletedNotification($offer));
         }
 
+        $offerId = $offer->offer_id;
         $offer->delete();
+
+        broadcast(new OfferUpdated($offerId));
 
         return response()->json([
             'message' => 'Offer deleted successfully.',
