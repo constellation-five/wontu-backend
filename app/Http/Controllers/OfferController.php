@@ -165,6 +165,18 @@ class OfferController extends Controller
                 ->withCount('receivedRatings');
         }])->findOrFail($offer->offer_id);
 
+        $userId = auth()->id();
+        $hasRatedSeller = false;
+
+        if ($userId) {
+            $hasRatedSeller = \App\Models\Rating::where('rater_id', $userId)
+                ->where('rated_user_id', $offer->seller_id)
+                ->where('offer_id', $offer->offer_id)
+                ->exists();
+        }
+
+        $offer->seller->has_rated_seller = $hasRatedSeller;
+
         return response()->json($offer);
     }
 

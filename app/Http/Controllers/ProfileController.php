@@ -313,6 +313,7 @@ class ProfileController extends Controller
 
         $existingRating = Rating::where('rater_id', $currentUser->user_id)
             ->where('rated_user_id', $userId)
+            ->where('offer_id', $request->offer_id)
             ->first();
 
         if ($existingRating) {
