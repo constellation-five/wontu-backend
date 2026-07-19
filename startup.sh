@@ -7,6 +7,8 @@ chmod -R 775 storage bootstrap/cache
 
 php artisan migrate --force --no-interaction || echo "WARNING: migration step failed, check logs above. Continuing app startup."
 
+php artisan storage:link
+
 service nginx reload
 
 nohup php /home/site/wwwroot/artisan queue:work > /home/site/wwwroot/storage/logs/queue.log 2>&1 &
