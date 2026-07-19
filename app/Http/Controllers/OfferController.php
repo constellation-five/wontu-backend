@@ -445,6 +445,11 @@ class OfferController extends Controller
 
     public function placeOrder(Request $request, Offer $offer): JsonResponse
     {
+        if ($offer->closed_at) {
+            return response()->json([
+                'message' => 'Offer sudah ditutup. Anda tidak dapat membuat pesanan baru.',
+            ], 403);
+        }
         $userId = $request->user()->user_id;
         $validated = $request->validate([
             'items' => 'required|array',
@@ -519,6 +524,11 @@ class OfferController extends Controller
 
     public function updateOrder(Request $request, Offer $offer): JsonResponse
     {
+        if ($offer->closed_at) {
+            return response()->json([
+                'message' => 'Offer sudah ditutup. Anda tidak dapat mengubah pesanan.',
+            ], 403);
+        }
         $validated = $request->validate([
             'items' => 'required|array',
             'items.*.item_id' => 'required|integer|exists:items,item_id',
@@ -622,6 +632,11 @@ class OfferController extends Controller
 
     public function cancelOrder(Request $request, Offer $offer): JsonResponse
     {
+        if ($offer->closed_at) {
+            return response()->json([
+                'message' => 'Offer sudah ditutup. Anda tidak dapat membatalkan pesanan.',
+            ], 403);
+        }
         $userId = $request->user()->user_id;
 
         return DB::transaction(function () use ($offer, $userId, $request) {
@@ -786,6 +801,11 @@ class OfferController extends Controller
      */
     public function update(Request $request, Offer $offer): JsonResponse
     {
+        if ($offer->closed_at) {
+            return response()->json([
+                'message' => 'Offer sudah ditutup. Anda tidak dapat mengubah detail offer.',
+            ], 403);
+        }
         if ($offer->seller_id !== $request->user()->user_id) {
             return response()->json([
                 'message' => 'Hanya penjual yang bisa mengubah offer ini.',
@@ -1040,6 +1060,11 @@ class OfferController extends Controller
      */
     public function destroy(Request $request, Offer $offer): JsonResponse
     {
+        if ($offer->closed_at) {
+            return response()->json([
+                'message' => 'Offer sudah ditutup. Anda tidak dapat menghapus offer ini.',
+            ], 403);
+        }
         if ($offer->seller_id !== $request->user()->user_id) {
             return response()->json([
                 'message' => 'Hanya penjual yang bisa menghapus offer ini.',
