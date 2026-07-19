@@ -6,6 +6,7 @@ use App\Models\Message;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\BroadcastMessage;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class NewChatMessageNotification extends Notification implements ShouldQueue
@@ -18,11 +19,29 @@ class NewChatMessageNotification extends Notification implements ShouldQueue
 
     public function via(object $notifiable): array
     {
-        // Only send if the user has the 'chat-messages' setting enabled
-        return $notifiable->getSetting('chat-messages', true) ? ['database', 'broadcast'] : [];
+        return ['database', 'broadcast', 'mail'];
     }
 
-    public function toArray(object $notifiable): array
+    public function toBroadcast(object $notifiable): BroadcastMessage
+    {
+        return new BroadcastMessage($this->data());
+    }
+
+    public function toDatabase(object $notifiable): array
+    {
+        return $this->data();
+    }
+
+    public function toMail(object $notifiable): MailMessage
+    {
+        $senderName = $this->message->sender?->name ?? 'System';
+
+        return (new MailMessage)
+            ->subject('New message from ' . $senderName . ' - Wontu')
+            ->view('emails.notification', ['data' => $this->data()]);
+    }
+
+    private function data(): array
     {
         $senderName = $this->message->sender?->name ?? 'System';
         
@@ -35,24 +54,8 @@ class NewChatMessageNotification extends Notification implements ShouldQueue
             'title' => 'New message from ' . $senderName,
             'description' => str($preview)->limit(100),
             'icon' => 'chat',
+            'notification_type' => 'info',
             'action_url' => '/offers/' . $this->message->conversation->offer_id . '/chat',
         ];
-    }
-
-    public function toBroadcast(object $notifiable): BroadcastMessage
-    {
-        $senderName = $this->message->sender?->name ?? 'System';
-        $preview = $this->message->body ?: 'Sent an image';
-
-        return new BroadcastMessage([
-            'id' => $this->id,
-            'title' => 'New message from ' . $senderName,
-            'description' => str($preview)->limit(100),
-            'icon' => 'chat',
-            'action_url' => '/offers/' . $this->message->conversation->offer_id . '/chat',
-            'created_at' => now()->toIso8601String(),
-            'read_at' => null,
-            'category' => 'chat-messages',
-        ]);
     }
 }
