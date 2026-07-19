@@ -101,7 +101,10 @@ class OfferController extends Controller
             'lng' => ['sometimes', 'numeric', 'between:-180,180', 'required_with:lat'],
         ]);
 
-        $offers = Offer::with(['items', 'seller'])
+        $offers = Offer::with(['items', 'seller' => function ($query) {
+            $query->withAvg('receivedRatings', 'rating')
+                  ->withCount('receivedRatings');
+        }])
             ->withCoordinates()
             ->whereNull('closed_at')
             ->when($search, function ($query, $search) {
@@ -156,7 +159,10 @@ class OfferController extends Controller
 
     public function show(Offer $offer)
     {
-        $offer = Offer::withCoordinates()->with(['items', 'seller'])->findOrFail($offer->offer_id);
+        $offer = Offer::withCoordinates()->with(['items', 'seller' => function ($query) {
+            $query->withAvg('receivedRatings', 'rating')
+                  ->withCount('receivedRatings');
+        }])->findOrFail($offer->offer_id);
 
         return response()->json($offer);
     }
