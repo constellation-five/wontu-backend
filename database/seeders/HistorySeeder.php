@@ -88,7 +88,5 @@ class HistorySeeder extends Seeder
             'quantity' => 2,
             'notes' => null,
         ]);
-
-        $this->command->info("✅ Created completed order for [{$buyer->name}] at offer [{$offer->merchant_name}] (offer_id: {$offer->offer_id})");
     }
 }
