@@ -20,14 +20,14 @@ class SettingsController extends Controller
             ['user_id' => $user->user_id],
             [
                 'notifications' => UserSetting::getDefaultNotifications(),
-                'language' => 'english',
+                'language' => 'en',
                 'dark_mode' => false,
             ]
         );
 
         return response()->json([
             'success' => true,
-            'message' => 'Settings retrieved successfully',
+            'message' => __('Settings retrieved successfully'),
             'data' => [
                 'notifications' => $settings->notifications,
                 'language' => $settings->language,
@@ -45,7 +45,7 @@ class SettingsController extends Controller
             'notifications' => 'sometimes|array',
             'notifications.*.push' => 'sometimes|boolean',
             'notifications.*.email' => 'sometimes|boolean',
-            'language' => ['sometimes', 'string', Rule::in(['english', 'indonesian'])],
+            'language' => ['sometimes', 'string', Rule::in(['en', 'id'])],
             'dark_mode' => 'sometimes|boolean',
         ]);
 
@@ -55,7 +55,7 @@ class SettingsController extends Controller
             ['user_id' => $user->user_id],
             [
                 'notifications' => UserSetting::getDefaultNotifications(),
-                'language' => 'english',
+                'language' => 'en',
                 'dark_mode' => false,
             ]
         );
@@ -75,7 +75,7 @@ class SettingsController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Settings updated successfully',
+            'message' => __('Settings updated successfully'),
             'data' => [
                 'notifications' => $settings->notifications,
                 'language' => $settings->language,

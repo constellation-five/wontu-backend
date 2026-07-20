@@ -10,12 +10,14 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Contracts\Translation\HasLocalePreference;
 
 #[Fillable(['name', 'email', 'username', 'google_id', 'avatar'])]
 #[Hidden(['remember_token'])]
-class User extends Authenticatable
+class User extends Authenticatable implements HasLocalePreference
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, HasUuids, Notifiable;
@@ -77,5 +79,15 @@ class User extends Authenticatable
     public function conversationParticipants(): HasMany
     {
         return $this->hasMany(ConversationParticipant::class, 'user_id', 'user_id');
+    }
+
+    public function settings(): HasOne
+    {
+        return $this->hasOne(UserSetting::class, 'user_id', 'user_id');
+    }
+
+    public function preferredLocale(): string
+    {
+        return $this->settings?->language ?? 'en';
     }
 }
