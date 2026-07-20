@@ -35,15 +35,15 @@ class OfferAutoClosedSoldOutNotification extends Notification implements ShouldB
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Offer Closed - Sold Out - Wontu')
+            ->subject(__('Offer Closed - Sold Out - Wontu'))
             ->view('emails.notification', ['data' => $this->data()]);
     }
 
     private function data(): array
     {
         return [
-            'title' => 'Offer Sold Out and Closed',
-            'description' => "Your {$this->offer->merchant_name} offer reached its closing time fully sold out and has been closed automatically.",
+            'title' => __('Offer Sold Out and Closed'),
+            'description' => __('Your :merchant_name offer reached its closing time fully sold out and has been closed automatically.', ['merchant_name' => $this->offer->merchant_name]),
             'icon' => 'inventory_2',
             'notification_type' => 'success',
             'action_url' => "/offers/{$this->offer->offer_id}",

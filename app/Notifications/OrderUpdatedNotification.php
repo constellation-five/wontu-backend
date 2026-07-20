@@ -37,15 +37,15 @@ class OrderUpdatedNotification extends Notification implements ShouldBroadcastNo
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Order Updated - Wontu')
+            ->subject(__('Order Updated - Wontu'))
             ->view('emails.notification', ['data' => $this->data()]);
     }
 
     private function data(): array
     {
         return [
-            'title' => 'Order Updated',
-            'description' => "{$this->buyer->name} updated their order in your {$this->offer->merchant_name} offer.",
+            'title' => __('Order Updated'),
+            'description' => __(':buyer_name updated their order in your :merchant_name offer.', ['buyer_name' => $this->buyer->name, 'merchant_name' => $this->offer->merchant_name]),
             'icon' => 'edit',
             'notification_type' => 'info',
             'action_url' => "/offers/{$this->offer->offer_id}",

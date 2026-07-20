@@ -85,7 +85,7 @@ class RequestController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Successfully created', 
+            'message' => __('Successfully created'), 
             'data' => $newRequest
         ], 201);
     }
@@ -96,7 +96,7 @@ class RequestController extends Controller
         $requestItem = RequestModel::findOrFail($id);
 
         if ($requestItem->requester_id !== Auth::user()->user_id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+            return response()->json(['message' => __('Unauthorized')], 403);
         }
 
         $validated = $request->validate([
@@ -120,7 +120,7 @@ class RequestController extends Controller
         $requestItem->save();
 
         return response()->json([
-            'message' => 'Successfully updated', 
+            'message' => __('Successfully updated'), 
             'data' => $requestItem
         ], 200);
     }
@@ -131,12 +131,12 @@ class RequestController extends Controller
         $requestItem = RequestModel::findOrFail($id);
 
         if ($requestItem->requester_id !== Auth::user()->user_id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+            return response()->json(['message' => __('Unauthorized')], 403);
         }
 
         $requestItem->delete();
 
-        return response()->json(['message' => 'Successfully removed'], 200);
+        return response()->json(['message' => __('Successfully removed')], 200);
     }
 
     // TOGGLE VOTE

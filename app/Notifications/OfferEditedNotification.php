@@ -37,17 +37,17 @@ class OfferEditedNotification extends Notification implements ShouldBroadcastNow
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Offer Updated - Wontu')
+            ->subject(__('Offer Updated - Wontu'))
             ->view('emails.notification', ['data' => $this->data()]);
     }
 
     private function data(): array
     {
         return [
-            'title' => $this->disruptive ? 'Important Offer Changes' : 'Offer Updated',
+            'title' => $this->disruptive ? __('Important Offer Changes') : __('Offer Updated'),
             'description' => $this->disruptive
-                ? "The {$this->offer->merchant_name} offer you joined was changed in ways that may affect your order. Please review."
-                : "The {$this->offer->merchant_name} offer you joined was updated by the seller.",
+                ? __('The :merchant_name offer you joined was changed in ways that may affect your order. Please review.', ['merchant_name' => $this->offer->merchant_name])
+                : __('The :merchant_name offer you joined was updated by the seller.', ['merchant_name' => $this->offer->merchant_name]),
             'icon' => 'edit',
             'notification_type' => $this->disruptive ? 'warning' : 'info',
             'action_url' => "/offers/{$this->offer->offer_id}",

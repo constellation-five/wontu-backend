@@ -38,7 +38,7 @@ class ProfileController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'User profile retrieved successfully',
+            'message' => __('User profile retrieved successfully'),
             'data'    => [
                 'user_id'           => $user->user_id,
                 'username'          => $user->username,
@@ -64,7 +64,7 @@ class ProfileController extends Controller
         if ($currentUser->user_id === $userId) {
             return response()->json([
                 'success' => false,
-                'message' => 'You cannot follow yourself'
+                'message' => __('You cannot follow yourself')
             ], 400);
         }
 
@@ -73,7 +73,7 @@ class ProfileController extends Controller
         if ($currentUser->following()->where('following_id', $userId)->exists()) {
             return response()->json([
                 'success' => false,
-                'message' => 'You are already following this user'
+                'message' => __('You are already following this user')
             ], 400);
         }
 
@@ -84,7 +84,7 @@ class ProfileController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Successfully followed user'
+            'message' => __('Successfully followed user')
         ], 200);
     }
 
@@ -98,7 +98,7 @@ class ProfileController extends Controller
         if ($currentUser->user_id === $userId) {
             return response()->json([
                 'success' => false,
-                'message' => 'You cannot unfollow yourself'
+                'message' => __('You cannot unfollow yourself')
             ], 400);
         }
 
@@ -107,7 +107,7 @@ class ProfileController extends Controller
         if (!$currentUser->following()->where('following_id', $userId)->exists()) {
             return response()->json([
                 'success' => false,
-                'message' => 'You are not following this user'
+                'message' => __('You are not following this user')
             ], 400);
         }
 
@@ -115,7 +115,7 @@ class ProfileController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Successfully unfollowed user'
+            'message' => __('Successfully unfollowed user')
         ], 200);
     }
 
@@ -189,7 +189,7 @@ class ProfileController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Followers retrieved successfully',
+            'message' => __('Followers retrieved successfully'),
             'data'    => $result
         ], 200);
     }
@@ -256,7 +256,7 @@ class ProfileController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Following retrieved successfully',
+            'message' => __('Following retrieved successfully'),
             'data'    => $result
         ], 200);
     }
@@ -287,7 +287,7 @@ class ProfileController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Rating breakdown retrieved successfully',
+            'message' => __('Rating breakdown retrieved successfully'),
             'data'    => [
                 'total_ratings'  => $totalRatings,
                 'average_rating' => round($averageRating, 2),
@@ -307,7 +307,7 @@ class ProfileController extends Controller
         if ($currentUser->user_id === $userId) {
             return response()->json([
                 'success' => false,
-                'message' => 'You cannot rate yourself'
+                'message' => __('You cannot rate yourself')
             ], 400);
         }
 
@@ -328,7 +328,7 @@ class ProfileController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Rating updated successfully',
+                'message' => __('Rating updated successfully'),
                 'data'    => $existingRating
             ], 200);
         }
@@ -347,7 +347,7 @@ class ProfileController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Rating added successfully',
+            'message' => __('Rating added successfully'),
             'data'    => $rating
         ], 201);
     }
@@ -362,7 +362,7 @@ class ProfileController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Profile updated successfully',
+            'message' => __('Profile updated successfully'),
             'data'    => [
                 'user_id'    => $currentUser->user_id,
                 'username'   => $currentUser->username,
@@ -384,7 +384,7 @@ class ProfileController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Personal information retrieved successfully',
+            'message' => __('Personal information retrieved successfully'),
             'data'    => [
                 'user_id'    => $currentUser->user_id,
                 'username'   => $currentUser->username,

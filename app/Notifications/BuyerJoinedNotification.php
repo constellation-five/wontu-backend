@@ -37,15 +37,15 @@ class BuyerJoinedNotification extends Notification implements ShouldBroadcastNow
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('New Buyer Joined - Wontu')
+            ->subject(__('New Buyer Joined - Wontu'))
             ->view('emails.notification', ['data' => $this->data()]);
     }
 
     private function data(): array
     {
         return [
-            'title' => 'New Buyer Joined',
-            'description' => "{$this->buyer->name} joined your {$this->offer->merchant_name} offer.",
+            'title' => __('New Buyer Joined'),
+            'description' => __(':buyer_name joined your :merchant_name offer.', ['buyer_name' => $this->buyer->name, 'merchant_name' => $this->offer->merchant_name]),
             'icon' => 'group_add',
             'notification_type' => 'info',
             'action_url' => "/offers/{$this->offer->offer_id}",

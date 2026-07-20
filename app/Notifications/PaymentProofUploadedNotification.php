@@ -37,15 +37,15 @@ class PaymentProofUploadedNotification extends Notification implements ShouldBro
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Payment Proof Uploaded - Wontu')
+            ->subject(__('Payment Proof Uploaded - Wontu'))
             ->view('emails.notification', ['data' => $this->data()]);
     }
 
     private function data(): array
     {
         return [
-            'title' => 'Payment Proof Uploaded',
-            'description' => "{$this->buyer->name} uploaded a payment proof for your {$this->offer->merchant_name} offer.",
+            'title' => __('Payment Proof Uploaded'),
+            'description' => __(':buyer_name uploaded a payment proof for your :merchant_name offer.', ['buyer_name' => $this->buyer->name, 'merchant_name' => $this->offer->merchant_name]),
             'icon' => 'payments',
             'notification_type' => 'info',
             'action_url' => "/offers/{$this->offer->offer_id}",

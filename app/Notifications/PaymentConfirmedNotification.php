@@ -35,15 +35,15 @@ class PaymentConfirmedNotification extends Notification implements ShouldBroadca
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Payment Confirmed - Wontu')
+            ->subject(__('Payment Confirmed - Wontu'))
             ->view('emails.notification', ['data' => $this->data()]);
     }
 
     private function data(): array
     {
         return [
-            'title' => 'Payment Confirmed',
-            'description' => "Your payment for the {$this->offer->merchant_name} offer has been confirmed by the seller.",
+            'title' => __('Payment Confirmed'),
+            'description' => __('Your payment for the :merchant_name offer has been confirmed by the seller.', ['merchant_name' => $this->offer->merchant_name]),
             'icon' => 'check_circle',
             'notification_type' => 'success',
             'action_url' => "/offers/{$this->offer->offer_id}",

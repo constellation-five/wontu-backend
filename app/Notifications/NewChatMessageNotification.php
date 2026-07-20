@@ -37,7 +37,7 @@ class NewChatMessageNotification extends Notification implements ShouldQueue
         $senderName = $this->message->sender?->name ?? 'System';
 
         return (new MailMessage)
-            ->subject('New message from ' . $senderName . ' - Wontu')
+            ->subject(__('New message from :sender - Wontu', ['sender' => $senderName]))
             ->view('emails.notification', ['data' => $this->data()]);
     }
 
@@ -47,11 +47,11 @@ class NewChatMessageNotification extends Notification implements ShouldQueue
         
         $preview = $this->message->body;
         if (empty($preview) && $this->message->image_url) {
-            $preview = 'Sent an image';
+            $preview = __('Sent an image');
         }
 
         return [
-            'title' => 'New message from ' . $senderName,
+            'title' => __('New message from :sender', ['sender' => $senderName]),
             'description' => str($preview)->limit(100),
             'icon' => 'chat',
             'notification_type' => 'info',

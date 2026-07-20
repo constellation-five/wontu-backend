@@ -26,7 +26,7 @@ class ChatController extends Controller
         $me = $request->user();
 
         if ($otherUser->user_id === $me->user_id) {
-            return response()->json(['message' => 'You cannot chat with yourself.'], 422);
+            return response()->json(['message' => __('You cannot chat with yourself.')], 422);
         }
 
         $conversation = $this->chatService->findOrCreatePrivateConversation($me, $otherUser)
@@ -44,7 +44,7 @@ class ChatController extends Controller
         $userId = $request->user()->user_id;
 
         if (! $this->canAccessOfferConversation($offer, $userId)) {
-            return response()->json(['message' => 'You do not have access to this offer\'s chat.'], 403);
+            return response()->json(['message' => __('You do not have access to this offer\')s chat.'], 403);
         }
 
         $conversation = $this->chatService->getOrCreateGroupConversation($offer)
@@ -96,7 +96,7 @@ class ChatController extends Controller
         }
 
         if (! $conversation->isOpen()) {
-            return response()->json(['message' => 'This chat is closed and no longer accepts new messages.'], 403);
+            return response()->json(['message' => __('This chat is closed and no longer accepts new messages.')], 403);
         }
 
         $validated = $request->validate([
@@ -106,7 +106,7 @@ class ChatController extends Controller
         ]);
 
         if (empty($validated['body']) && ! $request->hasFile('image')) {
-            return response()->json(['message' => 'A message must have text or an image.'], 422);
+            return response()->json(['message' => __('A message must have text or an image.')], 422);
         }
 
         $sender = $request->user();
@@ -122,7 +122,7 @@ class ChatController extends Controller
                 $isParticipant = $conversation->participants()->where('user_id', $target->user_id)->exists();
             }
             if (! $isParticipant) {
-                return response()->json(['message' => 'The selected recipient is not part of this chat.'], 422);
+                return response()->json(['message' => __('The selected recipient is not part of this chat.')], 422);
             }
         }
 
@@ -155,7 +155,7 @@ class ChatController extends Controller
         }
 
         if (! $isParticipant) {
-            return response()->json(['message' => 'You do not have access to this chat.'], 403);
+            return response()->json(['message' => __('You do not have access to this chat.')], 403);
         }
 
         return null;

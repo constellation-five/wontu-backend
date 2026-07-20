@@ -44,7 +44,7 @@ class OfferController extends Controller
     {
         if ($offer->seller_id === $userId) {
             return response()->json([
-                'message' => 'Penjual tidak bisa memesan di penawarannya sendiri.',
+                'message' => __('Penjual tidak bisa memesan di penawarannya sendiri.'),
             ], 403);
         }
 
@@ -55,7 +55,7 @@ class OfferController extends Controller
     {
         if ($offer->closed_at !== null) {
             return response()->json([
-                'message' => 'Offer ini sudah ditutup dan tidak menerima pesanan baru.',
+                'message' => __('Offer ini sudah ditutup dan tidak menerima pesanan baru.'),
             ], 409);
         }
 
@@ -76,14 +76,14 @@ class OfferController extends Controller
         // Validasi: current_slot tidak boleh negatif (kecuali diizinkan untuk rollback)
         if (! $allowNegative && $newCurrentSlot < 0) {
             return response()->json([
-                'message' => "Tidak bisa mengurangi stok item '{$item->item_name}' lebih dari yang sudah dipesan.",
+                'message' => __('Tidak bisa mengurangi stok item \':item_name\' lebih dari yang sudah dipesan.', ['item_name' => $item->item_name]),
             ], 400);
         }
 
         // Validasi: current_slot tidak boleh melebihi slot
         if ($newCurrentSlot > $item->slot) {
             return response()->json([
-                'message' => "Stok item '{$item->item_name}' tidak cukup.",
+                'message' => __('Stok item \':item_name\' tidak cukup.', ['item_name' => $item->item_name]),
                 'available' => $item->slot - $item->current_slot,
             ], 400);
         }
@@ -153,7 +153,7 @@ class OfferController extends Controller
         $this->chatService->getOrCreateGroupConversation($offer);
 
         return response()->json([
-            'message' => 'Offer created successfully.',
+            'message' => __('Offer created successfully.'),
             'offer' => $offer->load('items'),
         ], 201);
     }
@@ -269,13 +269,13 @@ class OfferController extends Controller
     {
         if ($offer->seller_id !== $request->user()->user_id) {
             return response()->json([
-                'message' => 'Hanya penjual yang bisa menutup offer ini.',
+                'message' => __('Hanya penjual yang bisa menutup offer ini.'),
             ], 403);
         }
 
         if ($offer->closed_at) {
             return response()->json([
-                'message' => 'Offer sudah ditutup.',
+                'message' => __('Offer sudah ditutup.'),
             ], 409);
         }
 
@@ -294,7 +294,7 @@ class OfferController extends Controller
         broadcast(new OfferUpdated($offer->offer_id));
 
         return response()->json([
-            'message' => 'Offer berhasil ditutup.',
+            'message' => __('Offer berhasil ditutup.'),
             'offer' => $offer->fresh(['items']),
         ], 200);
     }
@@ -307,13 +307,13 @@ class OfferController extends Controller
     {
         if ($offer->seller_id !== $request->user()->user_id) {
             return response()->json([
-                'message' => 'Hanya penjual yang bisa menandai offer ini sebagai tiba.',
+                'message' => __('Hanya penjual yang bisa menandai offer ini sebagai tiba.'),
             ], 403);
         }
 
         if ($offer->arrived_at) {
             return response()->json([
-                'message' => 'Offer sudah ditandai sebagai tiba.',
+                'message' => __('Offer sudah ditandai sebagai tiba.'),
             ], 409);
         }
 
@@ -338,7 +338,7 @@ class OfferController extends Controller
         );
 
         return response()->json([
-            'message' => 'Offer berhasil ditandai sebagai tiba.',
+            'message' => __('Offer berhasil ditandai sebagai tiba.'),
             'offer' => $offer->fresh(['items']),
         ], 200);
     }
@@ -362,7 +362,7 @@ class OfferController extends Controller
 
         if (! $offerBuyer) {
             return response()->json([
-                'message' => 'Anda tidak memiliki pesanan di offer ini.',
+                'message' => __('Anda tidak memiliki pesanan di offer ini.'),
             ], 404);
         }
 
@@ -377,7 +377,7 @@ class OfferController extends Controller
         $offer->seller->notify(new PaymentProofUploadedNotification($request->user(), $offer));
 
         return response()->json([
-            'message' => 'Bukti pembayaran berhasil dikirim.',
+            'message' => __('Bukti pembayaran berhasil dikirim.'),
             'offer_buyer' => $offerBuyer->fresh(),
         ], 200);
     }
@@ -391,7 +391,7 @@ class OfferController extends Controller
 
         if ($offer->seller_id === $userId) {
             return response()->json([
-                'message' => 'You cannot join your own offer.',
+                'message' => __('You cannot join your own offer.'),
             ], 403);
         }
 
@@ -422,7 +422,7 @@ class OfferController extends Controller
         }
 
         return response()->json([
-            'message' => 'Berhasil bergabung dengan offer.',
+            'message' => __('Berhasil bergabung dengan offer.'),
             'offer' => $offer->fresh()->load('items', 'buyers'),
         ], 200);
     }
@@ -434,13 +434,13 @@ class OfferController extends Controller
     {
         if ($offer->seller_id !== $request->user()->user_id) {
             return response()->json([
-                'message' => 'Hanya penjual yang bisa menyelesaikan offer ini.',
+                'message' => __('Hanya penjual yang bisa menyelesaikan offer ini.'),
             ], 403);
         }
 
         if ($offer->is_completed) {
             return response()->json([
-                'message' => 'Offer sudah selesai.',
+                'message' => __('Offer sudah selesai.'),
             ], 409);
         }
 
@@ -463,7 +463,7 @@ class OfferController extends Controller
         broadcast(new OfferUpdated($offer->offer_id));
 
         return response()->json([
-            'message' => 'Offer berhasil diselesaikan.',
+            'message' => __('Offer berhasil diselesaikan.'),
             'offer' => $offer->fresh(),
         ], 200);
     }
@@ -472,7 +472,7 @@ class OfferController extends Controller
     {
         if ($offer->closed_at) {
             return response()->json([
-                'message' => 'Offer sudah ditutup. Anda tidak dapat membuat pesanan baru.',
+                'message' => __('Offer sudah ditutup. Anda tidak dapat membuat pesanan baru.'),
             ], 403);
         }
         $userId = $request->user()->user_id;
@@ -499,7 +499,7 @@ class OfferController extends Controller
 
             if ($existing) {
                 return response()->json([
-                    'message' => 'Anda sudah memiliki pesanan di offer ini.',
+                    'message' => __('Anda sudah memiliki pesanan di offer ini.'),
                 ], 409);
             }
 
@@ -541,7 +541,7 @@ class OfferController extends Controller
             \Illuminate\Support\Facades\DB::afterCommit(fn () => broadcast(new OfferUpdated($offer->offer_id)));
 
             return response()->json([
-                'message' => 'Pesanan berhasil diproses dan Anda telah bergabung.',
+                'message' => __('Pesanan berhasil diproses dan Anda telah bergabung.'),
                 'offer' => $offer->load('items', 'buyers'),
             ], 200);
         });
@@ -551,7 +551,7 @@ class OfferController extends Controller
     {
         if ($offer->closed_at) {
             return response()->json([
-                'message' => 'Offer sudah ditutup. Anda tidak dapat mengubah pesanan.',
+                'message' => __('Offer sudah ditutup. Anda tidak dapat mengubah pesanan.'),
             ], 403);
         }
         $validated = $request->validate([
@@ -576,7 +576,7 @@ class OfferController extends Controller
             \Illuminate\Support\Facades\DB::afterCommit(fn () => broadcast(new OfferUpdated($offer->offer_id)));
 
             return response()->json([
-                'message' => 'Pesanan berhasil diupdate.',
+                'message' => __('Pesanan berhasil diupdate.'),
                 'offer' => $offer->fresh()->load('items'),
             ], 200);
         });
@@ -609,7 +609,7 @@ class OfferController extends Controller
 
             if (! $offerBuyer) {
                 return response()->json([
-                    'message' => 'Anda tidak memiliki pesanan di offer ini.',
+                    'message' => __('Anda tidak memiliki pesanan di offer ini.'),
                 ], 404);
             }
 
@@ -649,7 +649,7 @@ class OfferController extends Controller
             \Illuminate\Support\Facades\DB::afterCommit(fn () => broadcast(new OfferUpdated($offer->offer_id)));
 
             return response()->json([
-                'message' => 'Pesanan berhasil diproses.',
+                'message' => __('Pesanan berhasil diproses.'),
                 'offer' => $offer->fresh()->load('items', 'buyers'),
             ], 200);
         });
@@ -659,7 +659,7 @@ class OfferController extends Controller
     {
         if ($offer->closed_at) {
             return response()->json([
-                'message' => 'Offer sudah ditutup. Anda tidak dapat membatalkan pesanan.',
+                'message' => __('Offer sudah ditutup. Anda tidak dapat membatalkan pesanan.'),
             ], 403);
         }
         $userId = $request->user()->user_id;
@@ -672,7 +672,7 @@ class OfferController extends Controller
 
             if (! $offerBuyer) {
                 return response()->json([
-                    'message' => 'Anda tidak memiliki pesanan di offer ini.',
+                    'message' => __('Anda tidak memiliki pesanan di offer ini.'),
                 ], 404);
             }
 
@@ -704,7 +704,7 @@ class OfferController extends Controller
             \Illuminate\Support\Facades\DB::afterCommit(fn () => broadcast(new OfferUpdated($offer->offer_id)));
 
             return response()->json([
-                'message' => 'Pesanan berhasil dibatalkan dan stok dikembalikan.',
+                'message' => __('Pesanan berhasil dibatalkan dan stok dikembalikan.'),
                 'offer' => $offer->fresh()->load('items', 'buyers'),
             ], 200);
         });
@@ -734,7 +734,7 @@ class OfferController extends Controller
     {
         if ($offer->seller_id !== $request->user()->user_id) {
             return response()->json([
-                'message' => 'Hanya penjual yang bisa melihat pesanan offer ini.',
+                'message' => __('Hanya penjual yang bisa melihat pesanan offer ini.'),
             ], 403);
         }
 
@@ -772,13 +772,13 @@ class OfferController extends Controller
     {
         if ($offer->seller_id !== $request->user()->user_id) {
             return response()->json([
-                'message' => 'Hanya penjual yang bisa mengonfirmasi pembayaran ini.',
+                'message' => __('Hanya penjual yang bisa mengonfirmasi pembayaran ini.'),
             ], 403);
         }
 
         if ($offerBuyer->offer_id !== $offer->offer_id) {
             return response()->json([
-                'message' => 'Pesanan tidak ditemukan pada offer ini.',
+                'message' => __('Pesanan tidak ditemukan pada offer ini.'),
             ], 404);
         }
 
@@ -801,7 +801,7 @@ class OfferController extends Controller
         broadcast(new OfferUpdated($offer->offer_id));
 
         return response()->json([
-            'message' => 'Pembayaran berhasil dikonfirmasi.',
+            'message' => __('Pembayaran berhasil dikonfirmasi.'),
             'offer_buyer' => $offerBuyer->fresh(),
             'offer' => $offer->fresh(['items']),
         ], 200);
@@ -828,12 +828,12 @@ class OfferController extends Controller
     {
         if ($offer->closed_at) {
             return response()->json([
-                'message' => 'Offer sudah ditutup. Anda tidak dapat mengubah detail offer.',
+                'message' => __('Offer sudah ditutup. Anda tidak dapat mengubah detail offer.'),
             ], 403);
         }
         if ($offer->seller_id !== $request->user()->user_id) {
             return response()->json([
-                'message' => 'Hanya penjual yang bisa mengubah offer ini.',
+                'message' => __('Hanya penjual yang bisa mengubah offer ini.'),
             ], 403);
         }
 
@@ -1074,7 +1074,7 @@ class OfferController extends Controller
             \Illuminate\Support\Facades\DB::afterCommit(fn () => broadcast(new OfferUpdated($offer->offer_id)));
 
             return response()->json([
-                'message' => 'Offer updated successfully.',
+                'message' => __('Offer updated successfully.'),
                 'offer' => $offer->fresh()->load('items'),
             ], 200);
         });
@@ -1087,12 +1087,12 @@ class OfferController extends Controller
     {
         if ($offer->closed_at) {
             return response()->json([
-                'message' => 'Offer sudah ditutup. Anda tidak dapat menghapus offer ini.',
+                'message' => __('Offer sudah ditutup. Anda tidak dapat menghapus offer ini.'),
             ], 403);
         }
         if ($offer->seller_id !== $request->user()->user_id) {
             return response()->json([
-                'message' => 'Hanya penjual yang bisa menghapus offer ini.',
+                'message' => __('Hanya penjual yang bisa menghapus offer ini.'),
             ], 403);
         }
 
@@ -1106,7 +1106,7 @@ class OfferController extends Controller
         broadcast(new OfferUpdated($offerId));
 
         return response()->json([
-            'message' => 'Offer deleted successfully.',
+            'message' => __('Offer deleted successfully.'),
         ], 200);
     }
 
@@ -1131,12 +1131,12 @@ class OfferController extends Controller
 
         if (! $offerBuyer) {
             return response()->json([
-                'message' => 'Anda tidak memiliki pesanan di offer ini.',
+                'message' => __('Anda tidak memiliki pesanan di offer ini.'),
             ], 404);
         }
 
         return response()->json([
-            'message' => 'Pesanan Anda tetap dipertahankan.',
+            'message' => __('Pesanan Anda tetap dipertahankan.'),
         ], 200);
     }
 

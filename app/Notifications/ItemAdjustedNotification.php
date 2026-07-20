@@ -37,15 +37,15 @@ class ItemAdjustedNotification extends Notification implements ShouldBroadcastNo
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Your Order Was Adjusted - Wontu')
+            ->subject(__('Your Order Was Adjusted - Wontu'))
             ->view('emails.notification', ['data' => $this->data()]);
     }
 
     private function data(): array
     {
         return [
-            'title' => 'Your Order Was Adjusted',
-            'description' => "The seller reduced available stock for '{$this->itemName}' in the {$this->offer->merchant_name} offer, so your quantity was adjusted to {$this->newQuantity}.",
+            'title' => __('Your Order Was Adjusted'),
+            'description' => __('The seller reduced available stock for \':itemName\' in the :merchant_name offer, so your quantity was adjusted to :newQuantity.', ['itemName' => $this->itemName, 'merchant_name' => $this->offer->merchant_name, 'newQuantity' => $this->newQuantity]),
             'icon' => 'edit_note',
             'notification_type' => 'warning',
             'action_url' => "/offers/{$this->offer->offer_id}",

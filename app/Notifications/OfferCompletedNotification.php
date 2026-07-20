@@ -35,15 +35,15 @@ class OfferCompletedNotification extends Notification implements ShouldBroadcast
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Offer Complete! - Wontu')
+            ->subject(__('Offer Complete! - Wontu'))
             ->view('emails.notification', ['data' => $this->data()]);
     }
 
     private function data(): array
     {
         return [
-            'title' => 'Offer Complete!',
-            'description' => "The {$this->offer->merchant_name} offer is now complete. Please proceed with payment.",
+            'title' => __('Offer Complete!'),
+            'description' => __('The :merchant_name offer is now complete. Please proceed with payment.', ['merchant_name' => $this->offer->merchant_name]),
             'icon' => 'check_circle',
             'notification_type' => 'success',
             'action_url' => "/offers/{$this->offer->offer_id}",

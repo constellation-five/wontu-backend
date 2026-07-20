@@ -35,15 +35,15 @@ class OfferSoldOutEarlyNotification extends Notification implements ShouldBroadc
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Offer Sold Out - Wontu')
+            ->subject(__('Offer Sold Out - Wontu'))
             ->view('emails.notification', ['data' => $this->data()]);
     }
 
     private function data(): array
     {
         return [
-            'title' => 'Offer Sold Out',
-            'description' => "Your {$this->offer->merchant_name} offer sold out before its closing time and has been closed automatically.",
+            'title' => __('Offer Sold Out'),
+            'description' => __('Your :merchant_name offer sold out before its closing time and has been closed automatically.', ['merchant_name' => $this->offer->merchant_name]),
             'icon' => 'inventory_2',
             'notification_type' => 'success',
             'action_url' => "/offers/{$this->offer->offer_id}",

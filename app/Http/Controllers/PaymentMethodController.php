@@ -14,7 +14,7 @@ class PaymentMethodController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Payment methods retrieved successfully',
+            'message' => __('Payment methods retrieved successfully'),
             'data' => $methods
         ], 200);
     }
@@ -36,7 +36,7 @@ class PaymentMethodController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Payment method created successfully',
+            'message' => __('Payment method created successfully'),
             'data' => $paymentMethod
         ],201);
     }
@@ -57,7 +57,7 @@ class PaymentMethodController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Payment method updated successfully',
+            'message' => __('Payment method updated successfully'),
             'data'    => $paymentMethod
         ], 200);
     }
@@ -72,7 +72,7 @@ class PaymentMethodController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Payment method deleted successfully'
+            'message' => __('Payment method deleted successfully')
         ], 200);
     }
 }
