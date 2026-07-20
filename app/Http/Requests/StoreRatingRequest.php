@@ -24,7 +24,7 @@ class StoreRatingRequest extends FormRequest
     {
         return [
             'rating' => ['required', 'integer', 'min:1', 'max:5'],
-            'review' => ['nullable', 'string', 'max:500'],
+            'offer_id' => ['required', 'integer', 'exists:offers,offer_id'],
         ];
     }
 }

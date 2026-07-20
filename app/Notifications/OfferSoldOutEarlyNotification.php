@@ -46,7 +46,7 @@ class OfferSoldOutEarlyNotification extends Notification implements ShouldBroadc
             'description' => "Your {$this->offer->merchant_name} offer sold out before its closing time and has been closed automatically.",
             'icon' => 'inventory_2',
             'notification_type' => 'success',
-            'action_url' => "/offers/{$this->offer->offer_id}/manage",
+            'action_url' => "/offers/{$this->offer->offer_id}",
         ];
     }
 }

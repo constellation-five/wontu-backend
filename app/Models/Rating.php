@@ -15,8 +15,8 @@ class Rating extends Model
     protected $fillable = [
         'rater_id',
         'rated_user_id',
+        'offer_id',
         'rating',
-        'review',
     ];
 
     public function rater()
@@ -28,4 +28,10 @@ class Rating extends Model
     {
         return $this->belongsTo(User::class, 'rated_user_id', 'user_id');
     }
+
+    public function offer()
+    {
+        return $this->belongsTo(Offer::class, 'offer_id', 'offer_id');
+    }
+
 }

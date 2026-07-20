@@ -46,7 +46,7 @@ class OfferClosingReachedNotSoldOutNotification extends Notification implements 
             'description' => "Your {$this->offer->merchant_name} offer's closing time was reached and it has been closed automatically, not fully sold out.",
             'icon' => 'inventory_2',
             'notification_type' => 'warning',
-            'action_url' => "/offers/{$this->offer->offer_id}/manage",
+            'action_url' => "/offers/{$this->offer->offer_id}",
         ];
     }
 }
