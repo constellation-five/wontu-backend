@@ -197,6 +197,9 @@ class OfferController extends Controller
             'data' => $orders->map(fn ($offerBuyer) => [
                 'offer_id' => $offerBuyer->offer_id,
                 'merchant_name' => $offerBuyer->offer->merchant_name,
+                'location_label' => $offerBuyer->offer->location_label,
+                'closed_at' => $offerBuyer->offer->closed_at,
+                'arrived_at' => $offerBuyer->offer->arrived_at,
                 'is_confirmed' => $offerBuyer->is_confirmed,
                 'payment_proof_url' => $offerBuyer->payment_proof_url,
                 'joined_at' => $offerBuyer->created_at,
