@@ -44,10 +44,8 @@ class OfferEditedNotification extends Notification implements ShouldBroadcastNow
     private function data(): array
     {
         return [
-            'title' => $this->disruptive ? __('Important Offer Changes') : __('Offer Updated'),
-            'description' => $this->disruptive
-                ? __('The :merchant_name offer you joined was changed in ways that may affect your order. Please review.', ['merchant_name' => $this->offer->merchant_name])
-                : __('The :merchant_name offer you joined was updated by the seller.', ['merchant_name' => $this->offer->merchant_name]),
+            'template_key' => $this->disruptive ? 'NOTIF_OFFER_EDITED_DISRUPTIVE' : 'NOTIF_OFFER_EDITED',
+            'params' => ['merchant_name' => $this->offer->merchant_name],
             'icon' => 'edit',
             'notification_type' => $this->disruptive ? 'warning' : 'info',
             'action_url' => "/offers/{$this->offer->offer_id}",

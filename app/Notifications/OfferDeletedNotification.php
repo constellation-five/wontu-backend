@@ -42,8 +42,8 @@ class OfferDeletedNotification extends Notification implements ShouldBroadcastNo
     private function data(): array
     {
         return [
-            'title' => __('Offer Deleted'),
-            'description' => __('The :merchant_name offer you joined was deleted by the seller. Your order has been cancelled.', ['merchant_name' => $this->offer->merchant_name]),
+            'template_key' => 'NOTIF_OFFER_DELETED',
+            'params' => ['merchant_name' => $this->offer->merchant_name],
             'icon' => 'delete',
             'notification_type' => 'error',
             'action_url' => '/offers',

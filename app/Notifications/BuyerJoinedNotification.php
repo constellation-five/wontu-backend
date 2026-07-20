@@ -44,8 +44,8 @@ class BuyerJoinedNotification extends Notification implements ShouldBroadcastNow
     private function data(): array
     {
         return [
-            'title' => __('New Buyer Joined'),
-            'description' => __(':buyer_name joined your :merchant_name offer.', ['buyer_name' => $this->buyer->name, 'merchant_name' => $this->offer->merchant_name]),
+            'template_key' => 'NOTIF_BUYER_JOINED',
+            'params' => ['buyer_name' => $this->buyer->name, 'merchant_name' => $this->offer->merchant_name],
             'icon' => 'group_add',
             'notification_type' => 'info',
             'action_url' => "/offers/{$this->offer->offer_id}",

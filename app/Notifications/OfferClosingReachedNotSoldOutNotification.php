@@ -42,8 +42,8 @@ class OfferClosingReachedNotSoldOutNotification extends Notification implements 
     private function data(): array
     {
         return [
-            'title' => __('Offer Closed'),
-            'description' => __('Your :merchant_name offer\'s closing time was reached and it has been closed automatically, not fully sold out.', ['merchant_name' => $this->offer->merchant_name]),
+            'template_key' => 'NOTIF_OFFER_CLOSING_REACHED_NOT_SOLD_OUT',
+            'params' => ['merchant_name' => $this->offer->merchant_name],
             'icon' => 'inventory_2',
             'notification_type' => 'warning',
             'action_url' => "/offers/{$this->offer->offer_id}",

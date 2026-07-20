@@ -42,8 +42,8 @@ class ItemsArrivedNotification extends Notification implements ShouldBroadcastNo
     private function data(): array
     {
         return [
-            'title' => __('Items Have Arrived'),
-            'description' => __('The items for the :merchant_name offer you joined have arrived.', ['merchant_name' => $this->offer->merchant_name]),
+            'template_key' => 'NOTIF_ITEMS_ARRIVED',
+            'params' => ['merchant_name' => $this->offer->merchant_name],
             'icon' => 'local_shipping',
             'notification_type' => 'success',
             'action_url' => "/offers/{$this->offer->offer_id}",

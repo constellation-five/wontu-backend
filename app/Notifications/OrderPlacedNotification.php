@@ -44,8 +44,8 @@ class OrderPlacedNotification extends Notification implements ShouldBroadcastNow
     private function data(): array
     {
         return [
-            'title' => __('New Order Placed'),
-            'description' => __(':buyer_name placed an order in your :merchant_name offer.', ['buyer_name' => $this->buyer->name, 'merchant_name' => $this->offer->merchant_name]),
+            'template_key' => 'NOTIF_ORDER_PLACED',
+            'params' => ['buyer_name' => $this->buyer->name, 'merchant_name' => $this->offer->merchant_name],
             'icon' => 'shopping_cart',
             'notification_type' => 'success',
             'action_url' => "/offers/{$this->offer->offer_id}",

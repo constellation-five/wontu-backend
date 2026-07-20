@@ -42,8 +42,8 @@ class OfferCompletedNotification extends Notification implements ShouldBroadcast
     private function data(): array
     {
         return [
-            'title' => __('Offer Complete!'),
-            'description' => __('The :merchant_name offer is now complete. Please proceed with payment.', ['merchant_name' => $this->offer->merchant_name]),
+            'template_key' => 'NOTIF_OFFER_COMPLETED',
+            'params' => ['merchant_name' => $this->offer->merchant_name],
             'icon' => 'check_circle',
             'notification_type' => 'success',
             'action_url' => "/offers/{$this->offer->offer_id}",

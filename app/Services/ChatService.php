@@ -97,8 +97,8 @@ class ChatService
 
     public function postSystemMessage(
         Conversation $conversation,
-        string $title,
-        string $description,
+        string $templateKey,
+        array $params = [],
         string $icon = 'info',
         string $type = 'info',
         array $extraMetadata = [],
@@ -109,8 +109,8 @@ class ChatService
             'body' => null,
             'type' => 'system',
             'metadata' => array_merge([
-                'title' => $title,
-                'description' => $description,
+                'template_key' => $templateKey,
+                'params' => $params,
                 'icon' => $icon,
                 'notification_type' => $type,
             ], $extraMetadata),

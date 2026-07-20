@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $data['title'] ?? 'Notification from Wontu' }}</title>
+    <title>{{ isset($data['template_key']) ? __('notifications.' . $data['template_key'] . '.title') : ($data['title'] ?? 'Notification from Wontu') }}</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -158,13 +158,13 @@
                             </div>
                         </td>
                         <td valign="middle">
-                            <h2 class="title">{{ $data['title'] ?? 'Notification' }}</h2>
+                            <h2 class="title">{{ isset($data['template_key']) ? __('notifications.' . $data['template_key'] . '.title') : ($data['title'] ?? 'Notification') }}</h2>
                         </td>
                     </tr>
                 </table>
 
                 <div class="description">
-                    {{ $data['description'] ?? 'You have a new notification.' }}
+                    {{ isset($data['template_key']) ? __('notifications.' . $data['template_key'] . '.description', $data['params'] ?? []) : ($data['description'] ?? 'You have a new notification.') }}
                 </div>
 
                 @if (isset($data['action_url']))

@@ -49,8 +49,12 @@ class NewChatMessageNotification extends Notification implements ShouldQueue
         }
 
         return [
-            'title' => __('New message from :sender', ['sender' => $senderName]),
-            'description' => str($preview)->limit(100),
+            'template_key' => 'NOTIF_NEW_CHAT_MESSAGE',
+            'params' => [
+                'sender' => $senderName,
+                'preview' => $preview,
+                'is_image' => empty($this->message->body) && $this->message->image_url,
+            ],
             'icon' => 'chat',
             'notification_type' => 'info',
             'action_url' => $this->message->conversation->type === 'offer_group' ? '/offers/' . $this->message->conversation->offer_id . '/chat' : '/chat/' . $this->message->conversation->id,

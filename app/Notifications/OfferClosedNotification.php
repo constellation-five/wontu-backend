@@ -42,8 +42,8 @@ class OfferClosedNotification extends Notification implements ShouldBroadcastNow
     private function data(): array
     {
         return [
-            'title' => __('Offer Closed'),
-            'description' => __('The :merchant_name offer you joined has been closed.', ['merchant_name' => $this->offer->merchant_name]),
+            'template_key' => 'NOTIF_OFFER_CLOSED',
+            'params' => ['merchant_name' => $this->offer->merchant_name],
             'icon' => 'inventory_2',
             'notification_type' => 'info',
             'action_url' => "/offers/{$this->offer->offer_id}",

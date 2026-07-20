@@ -42,8 +42,8 @@ class UserFollowedNotification extends Notification implements ShouldBroadcastNo
     private function data(): array
     {
         return [
-            'title' => __('New Follower'),
-            'description' => __(':follower_name started following you.', ['follower_name' => $this->follower->name]),
+            'template_key' => 'NOTIF_USER_FOLLOWED',
+            'params' => ['follower_name' => $this->follower->name],
             'icon' => 'person_add',
             'notification_type' => 'info',
             'action_url' => "/profile/{$this->follower->user_id}",

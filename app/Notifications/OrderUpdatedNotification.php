@@ -44,8 +44,8 @@ class OrderUpdatedNotification extends Notification implements ShouldBroadcastNo
     private function data(): array
     {
         return [
-            'title' => __('Order Updated'),
-            'description' => __(':buyer_name updated their order in your :merchant_name offer.', ['buyer_name' => $this->buyer->name, 'merchant_name' => $this->offer->merchant_name]),
+            'template_key' => 'NOTIF_ORDER_UPDATED',
+            'params' => ['buyer_name' => $this->buyer->name, 'merchant_name' => $this->offer->merchant_name],
             'icon' => 'edit',
             'notification_type' => 'info',
             'action_url' => "/offers/{$this->offer->offer_id}",

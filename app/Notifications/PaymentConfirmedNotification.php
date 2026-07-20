@@ -42,8 +42,8 @@ class PaymentConfirmedNotification extends Notification implements ShouldBroadca
     private function data(): array
     {
         return [
-            'title' => __('Payment Confirmed'),
-            'description' => __('Your payment for the :merchant_name offer has been confirmed by the seller.', ['merchant_name' => $this->offer->merchant_name]),
+            'template_key' => 'NOTIF_PAYMENT_CONFIRMED',
+            'params' => ['merchant_name' => $this->offer->merchant_name],
             'icon' => 'check_circle',
             'notification_type' => 'success',
             'action_url' => "/offers/{$this->offer->offer_id}",

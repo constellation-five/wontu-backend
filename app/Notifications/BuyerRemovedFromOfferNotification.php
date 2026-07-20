@@ -45,8 +45,8 @@ class BuyerRemovedFromOfferNotification extends Notification implements ShouldBr
         $items = implode(', ', $this->removedItemNames);
 
         return [
-            'title' => __('Your Order Was Removed'),
-            'description' => __('Your order in the :merchant_name offer was removed because the seller reduced the available stock (:items).', ['merchant_name' => $this->offer->merchant_name, 'items' => $items]),
+            'template_key' => 'NOTIF_BUYER_REMOVED_FROM_OFFER',
+            'params' => ['merchant_name' => $this->offer->merchant_name, 'items' => $items],
             'icon' => 'remove_shopping_cart',
             'notification_type' => 'error',
             'action_url' => "/offers/{$this->offer->offer_id}",

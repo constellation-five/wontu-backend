@@ -44,8 +44,8 @@ class ItemAdjustedNotification extends Notification implements ShouldBroadcastNo
     private function data(): array
     {
         return [
-            'title' => __('Your Order Was Adjusted'),
-            'description' => __('The seller reduced available stock for \':itemName\' in the :merchant_name offer, so your quantity was adjusted to :newQuantity.', ['itemName' => $this->itemName, 'merchant_name' => $this->offer->merchant_name, 'newQuantity' => $this->newQuantity]),
+            'template_key' => 'NOTIF_ITEM_ADJUSTED',
+            'params' => ['itemName' => $this->itemName, 'merchant_name' => $this->offer->merchant_name, 'newQuantity' => $this->newQuantity],
             'icon' => 'edit_note',
             'notification_type' => 'warning',
             'action_url' => "/offers/{$this->offer->offer_id}",

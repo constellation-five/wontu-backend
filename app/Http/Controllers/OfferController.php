@@ -285,8 +285,8 @@ class OfferController extends Controller
         $conversation = $this->chatService->getOrCreateGroupConversation($offer);
         $this->chatService->postSystemMessage(
             $conversation,
-            'Offer Closed',
-            "The {$offer->merchant_name} offer has been closed by the seller and is no longer accepting orders.",
+            'SYS_OFFER_CLOSED',
+            ['merchant_name' => $offer->merchant_name],
             'lock',
             'info',
         );
@@ -330,8 +330,11 @@ class OfferController extends Controller
         $chatClosesAt = $conversation->chatClosesAt();
         $this->chatService->postSystemMessage(
             $conversation,
-            'Items Have Arrived',
-            "The items for the {$offer->merchant_name} offer have arrived. This chat will close to new messages on {$chatClosesAt->toDayDateTimeString()}.",
+            'SYS_ITEMS_ARRIVED',
+            [
+                'merchant_name' => $offer->merchant_name,
+                'chat_closes_at' => $chatClosesAt->toDayDateTimeString(),
+            ],
             'local_shipping',
             'success',
             ['chat_closes_at' => $chatClosesAt->toISOString()],
@@ -414,8 +417,11 @@ class OfferController extends Controller
             $conversation = $this->chatService->getOrCreateGroupConversation($offer);
             $this->chatService->postSystemMessage(
                 $conversation,
-                'Buyer Joined',
-                "{$request->user()->name} joined the {$offer->merchant_name} offer.",
+                'SYS_BUYER_JOINED',
+                [
+                    'user_name' => $request->user()->name,
+                    'merchant_name' => $offer->merchant_name,
+                ],
                 'group_add',
                 'info',
             );
@@ -454,8 +460,8 @@ class OfferController extends Controller
         $conversation = $this->chatService->getOrCreateGroupConversation($offer);
         $this->chatService->postSystemMessage(
             $conversation,
-            'Offer Completed',
-            "The {$offer->merchant_name} offer has been marked as completed.",
+            'SYS_OFFER_COMPLETED',
+            ['merchant_name' => $offer->merchant_name],
             'check_circle',
             'success',
         );
@@ -530,8 +536,11 @@ class OfferController extends Controller
             $conversation = $this->chatService->getOrCreateGroupConversation($offer);
             $this->chatService->postSystemMessage(
                 $conversation,
-                'Buyer Joined',
-                "{$request->user()->name} joined the {$offer->merchant_name} offer.",
+                'SYS_BUYER_JOINED',
+                [
+                    'user_name' => $request->user()->name,
+                    'merchant_name' => $offer->merchant_name,
+                ],
                 'group_add',
                 'info',
             );
@@ -695,8 +704,11 @@ class OfferController extends Controller
             $conversation = $this->chatService->getOrCreateGroupConversation($offer);
             $this->chatService->postSystemMessage(
                 $conversation,
-                'Buyer Left',
-                "{$request->user()->name} left the {$offer->merchant_name} offer.",
+                'SYS_BUYER_LEFT',
+                [
+                    'user_name' => $request->user()->name,
+                    'merchant_name' => $offer->merchant_name,
+                ],
                 'group_remove',
                 'info',
             );
@@ -1065,8 +1077,8 @@ class OfferController extends Controller
             $conversation = $this->chatService->getOrCreateGroupConversation($offer);
             $this->chatService->postSystemMessage(
                 $conversation,
-                'Offer Updated',
-                "The {$offer->merchant_name} offer was updated by the seller.",
+                'SYS_OFFER_UPDATED',
+                ['merchant_name' => $offer->merchant_name],
                 'edit',
                 'info',
             );

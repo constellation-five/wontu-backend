@@ -44,8 +44,8 @@ class PaymentProofUploadedNotification extends Notification implements ShouldBro
     private function data(): array
     {
         return [
-            'title' => __('Payment Proof Uploaded'),
-            'description' => __(':buyer_name uploaded a payment proof for your :merchant_name offer.', ['buyer_name' => $this->buyer->name, 'merchant_name' => $this->offer->merchant_name]),
+            'template_key' => 'NOTIF_PAYMENT_PROOF_UPLOADED',
+            'params' => ['buyer_name' => $this->buyer->name, 'merchant_name' => $this->offer->merchant_name],
             'icon' => 'payments',
             'notification_type' => 'info',
             'action_url' => "/offers/{$this->offer->offer_id}",
