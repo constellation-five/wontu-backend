@@ -18,10 +18,10 @@ return new class extends Migration
 
             $table->foreign('rater_id')->references('user_id')->on('users')->onDelete('cascade');
             $table->foreign('rated_user_id')->references('user_id')->on('users')->onDelete('cascade');
-            
+
             // Satu user cuma bisa kasih rating ke user lain satu kali
             $table->unique(['rater_id', 'rated_user_id']);
-            
+
             $table->index('rated_user_id');
         });
     }

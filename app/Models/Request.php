@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Query\Expression;
 use Illuminate\Support\Facades\DB;
@@ -14,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 class Request extends Model
 {
     protected $table = 'requests';
+
     protected $primaryKey = 'request_id';
 
     protected $hidden = ['location'];

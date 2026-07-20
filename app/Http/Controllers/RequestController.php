@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request; 
 use App\Models\Request as RequestModel;
 use App\Models\RequestVoter;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class RequestController extends Controller
@@ -42,8 +42,9 @@ class RequestController extends Controller
             if ($userId) {
                 $req->has_voted = $req->voters()->where('users.user_id', $userId)->exists();
             } else {
-                $req->has_voted = false; 
+                $req->has_voted = false;
             }
+
             return $req;
         });
 
@@ -73,20 +74,20 @@ class RequestController extends Controller
             'category' => $validated['category'],
             'arrival_time' => $validated['arrival_time'],
             'location_label' => $validated['location_label'] ?? null,
-            'location' => isset($validated['location_lat'], $validated['location_lng']) 
-                ? RequestModel::makePoint($validated['location_lat'], $validated['location_lng']) 
+            'location' => isset($validated['location_lat'], $validated['location_lng'])
+                ? RequestModel::makePoint($validated['location_lat'], $validated['location_lng'])
                 : null,
-            'total_votes' => 1
+            'total_votes' => 1,
         ]);
 
         RequestVoter::create([
             'request_id' => $newRequest->request_id,
-            'user_id' => $userId
+            'user_id' => $userId,
         ]);
 
         return response()->json([
-            'message' => __('Successfully created'), 
-            'data' => $newRequest
+            'message' => __('Successfully created'),
+            'data' => $newRequest,
         ], 201);
     }
 
@@ -108,10 +109,18 @@ class RequestController extends Controller
             'location_lng' => 'nullable|numeric',
         ]);
 
-        if (isset($validated['item_name'])) $requestItem->item_name = $validated['item_name'];
-        if (isset($validated['category'])) $requestItem->category = $validated['category'];
-        if (isset($validated['arrival_time'])) $requestItem->arrival_time = $validated['arrival_time'];
-        if (array_key_exists('location_label', $validated)) $requestItem->location_label = $validated['location_label'];
+        if (isset($validated['item_name'])) {
+            $requestItem->item_name = $validated['item_name'];
+        }
+        if (isset($validated['category'])) {
+            $requestItem->category = $validated['category'];
+        }
+        if (isset($validated['arrival_time'])) {
+            $requestItem->arrival_time = $validated['arrival_time'];
+        }
+        if (array_key_exists('location_label', $validated)) {
+            $requestItem->location_label = $validated['location_label'];
+        }
 
         if (isset($validated['location_lat'], $validated['location_lng'])) {
             $requestItem->location = RequestModel::makePoint($validated['location_lat'], $validated['location_lng']);
@@ -120,8 +129,8 @@ class RequestController extends Controller
         $requestItem->save();
 
         return response()->json([
-            'message' => __('Successfully updated'), 
-            'data' => $requestItem
+            'message' => __('Successfully updated'),
+            'data' => $requestItem,
         ], 200);
     }
 
@@ -146,8 +155,8 @@ class RequestController extends Controller
         $requestItem = RequestModel::findOrFail($id);
 
         $deleted = RequestVoter::where('user_id', $userId)
-                               ->where('request_id', $id)
-                               ->delete();
+            ->where('request_id', $id)
+            ->delete();
 
         if ($deleted) {
             // Unlove / Cancel Vote
@@ -157,15 +166,15 @@ class RequestController extends Controller
             // Love / Vote
             RequestVoter::create([
                 'request_id' => $id,
-                'user_id' => $userId
+                'user_id' => $userId,
             ]);
             $requestItem->increment('total_votes');
             $message = 'Add Vote';
         }
 
         return response()->json([
-            'message' => $message, 
-            'total_votes' => $requestItem->total_votes
+            'message' => $message,
+            'total_votes' => $requestItem->total_votes,
         ], 200);
     }
 
@@ -176,7 +185,7 @@ class RequestController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'data' => $requestItem
+            'data' => $requestItem,
         ], 200);
     }
 }

@@ -6,6 +6,7 @@ use App\Http\Resources\ConversationResource;
 use App\Http\Resources\MessageResource;
 use App\Models\Conversation;
 use App\Models\Offer;
+use App\Models\OfferBuyer;
 use App\Models\User;
 use App\Services\ChatService;
 use Illuminate\Http\JsonResponse;
@@ -44,7 +45,7 @@ class ChatController extends Controller
         $userId = $request->user()->user_id;
 
         if (! $this->canAccessOfferConversation($offer, $userId)) {
-            return response()->json(['message' => __('You do not have access to this offer\')s chat.'], 403);
+            return response()->json(['message' => __('You do not have access to this offer\'s chat.')], 403);
         }
 
         $conversation = $this->chatService->getOrCreateGroupConversation($offer)
@@ -75,10 +76,10 @@ class ChatController extends Controller
             ->with('sender', 'target');
 
         if ($conversation->type === 'offer_group' && $conversation->offer) {
-            $offerBuyer = \App\Models\OfferBuyer::where('offer_id', $conversation->offer_id)
+            $offerBuyer = OfferBuyer::where('offer_id', $conversation->offer_id)
                 ->where('buyer_id', $request->user()->user_id)
                 ->first();
-            
+
             if ($offerBuyer) {
                 $messagesQuery->where('created_at', '>=', $offerBuyer->created_at);
             }
@@ -116,7 +117,7 @@ class ChatController extends Controller
             $target = User::findOrFail($validated['target_user_id']);
 
             if ($conversation->type === 'offer_group' && $conversation->offer) {
-                $isParticipant = $conversation->offer->seller_id === $target->user_id || 
+                $isParticipant = $conversation->offer->seller_id === $target->user_id ||
                                  $conversation->offer->buyers()->where('users.user_id', $target->user_id)->exists();
             } else {
                 $isParticipant = $conversation->participants()->where('user_id', $target->user_id)->exists();
@@ -148,7 +149,7 @@ class ChatController extends Controller
         $userId = $request->user()->user_id;
 
         if ($conversation->type === 'offer_group' && $conversation->offer) {
-            $isParticipant = $conversation->offer->seller_id === $userId || 
+            $isParticipant = $conversation->offer->seller_id === $userId ||
                              $conversation->offer->buyers()->where('users.user_id', $userId)->exists();
         } else {
             $isParticipant = $conversation->participants()->where('user_id', $userId)->exists();

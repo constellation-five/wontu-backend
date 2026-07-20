@@ -5,8 +5,8 @@ use App\Http\Controllers\ChatController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OfferController;
 use App\Http\Controllers\PaymentMethodController;
-use App\Http\Controllers\RequestController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RequestController;
 use App\Http\Controllers\SettingsController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -35,7 +35,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
-        
+
     // Offers Routes
     Route::post('/offers', [OfferController::class, 'store']);
     Route::post('/offers/{offer}/join', [OfferController::class, 'join']);
@@ -56,23 +56,23 @@ Route::middleware('auth')->group(function () {
     Route::delete('/offers/{offer}', [OfferController::class, 'destroy']);
     Route::post('/uploads/image', [OfferController::class, 'uploadImage']);
     Route::post('/uploads/delete', [OfferController::class, 'deleteUpload']);
-    
+
     Route::post('/auth/logout', function (Request $request) {
         Auth::logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        
+
         return response()->json(['message' => 'Successfully logged out']);
     });
-    
+
     // Payment Method Routes
     Route::get('/payment-methods', [PaymentMethodController::class, 'index']);
     Route::post('/payment-methods', [PaymentMethodController::class, 'store']);
     Route::put('/payment-methods/{id}', [PaymentMethodController::class, 'update']);
     Route::delete('/payment-methods/{id}', [PaymentMethodController::class, 'destroy']);
     Route::get('/test-detail/{offer}', [OfferController::class, 'show']);
-    
+
     // Request Routes
     Route::post('/requests', [RequestController::class, 'store']);
     Route::put('/requests/{id}', [RequestController::class, 'update']);
@@ -110,4 +110,3 @@ Route::middleware('auth')->group(function () {
     Route::get('/settings', [SettingsController::class, 'index']);
     Route::put('/settings', [SettingsController::class, 'update']);
 });
-            

@@ -6,6 +6,7 @@ use App\Http\Requests\StoreRatingRequest;
 use App\Http\Requests\UpdateProfileRequest;
 use App\Models\Rating;
 use App\Models\User;
+use App\Notifications\UserFollowedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -39,18 +40,18 @@ class ProfileController extends Controller
         return response()->json([
             'success' => true,
             'message' => __('User profile retrieved successfully'),
-            'data'    => [
-                'user_id'           => $user->user_id,
-                'username'          => $user->username,
-                'name'              => $user->name,
-                'avatar'            => $user->avatar,
-                'followers_count'   => $user->followers_count,
-                'following_count'   => $user->following_count,
-                'average_rating'    => round($user->received_ratings_avg_rating ?? 0, 2),
-                'total_ratings'     => $user->received_ratings_count,
-                'is_following'      => $isFollowing,
+            'data' => [
+                'user_id' => $user->user_id,
+                'username' => $user->username,
+                'name' => $user->name,
+                'avatar' => $user->avatar,
+                'followers_count' => $user->followers_count,
+                'following_count' => $user->following_count,
+                'average_rating' => round($user->received_ratings_avg_rating ?? 0, 2),
+                'total_ratings' => $user->received_ratings_count,
+                'is_following' => $isFollowing,
                 'is_following_back' => $isFollowingBack,
-            ]
+            ],
         ], 200);
     }
 
@@ -64,7 +65,7 @@ class ProfileController extends Controller
         if ($currentUser->user_id === $userId) {
             return response()->json([
                 'success' => false,
-                'message' => __('You cannot follow yourself')
+                'message' => __('You cannot follow yourself'),
             ], 400);
         }
 
@@ -73,18 +74,18 @@ class ProfileController extends Controller
         if ($currentUser->following()->where('following_id', $userId)->exists()) {
             return response()->json([
                 'success' => false,
-                'message' => __('You are already following this user')
+                'message' => __('You are already following this user'),
             ], 400);
         }
 
         $currentUser->following()->attach($userId);
 
         // Send notification to the followed user
-        $followedUser->notify(new \App\Notifications\UserFollowedNotification($currentUser));
+        $followedUser->notify(new UserFollowedNotification($currentUser));
 
         return response()->json([
             'success' => true,
-            'message' => __('Successfully followed user')
+            'message' => __('Successfully followed user'),
         ], 200);
     }
 
@@ -98,16 +99,16 @@ class ProfileController extends Controller
         if ($currentUser->user_id === $userId) {
             return response()->json([
                 'success' => false,
-                'message' => __('You cannot unfollow yourself')
+                'message' => __('You cannot unfollow yourself'),
             ], 400);
         }
 
         User::findOrFail($userId);
 
-        if (!$currentUser->following()->where('following_id', $userId)->exists()) {
+        if (! $currentUser->following()->where('following_id', $userId)->exists()) {
             return response()->json([
                 'success' => false,
-                'message' => __('You are not following this user')
+                'message' => __('You are not following this user'),
             ], 400);
         }
 
@@ -115,7 +116,7 @@ class ProfileController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => __('Successfully unfollowed user')
+            'message' => __('Successfully unfollowed user'),
         ], 200);
     }
 
@@ -160,7 +161,7 @@ class ProfileController extends Controller
 
             // Mutual: irisan antara following current user & following milik follower ini
             $mutualFriends = [];
-            $mutualCount   = 0;
+            $mutualCount = 0;
             if ($currentUser && $currentUser->user_id !== $follower->user_id) {
                 $followerFollowingIds = $follower->following()
                     ->pluck('users.user_id')
@@ -171,26 +172,26 @@ class ProfileController extends Controller
                     ->select('users.user_id', 'users.username', 'users.name', 'users.avatar')
                     ->get();
 
-                $mutualCount   = $mutuals->count();
+                $mutualCount = $mutuals->count();
                 $mutualFriends = $mutuals->take(3)->values()->toArray();
             }
 
             return [
-                'user_id'           => $follower->user_id,
-                'username'          => $follower->username,
-                'name'              => $follower->name,
-                'avatar'            => $follower->avatar,
-                'is_following'      => $isFollowing,
+                'user_id' => $follower->user_id,
+                'username' => $follower->username,
+                'name' => $follower->name,
+                'avatar' => $follower->avatar,
+                'is_following' => $isFollowing,
                 'is_following_back' => $isFollowingBack,
-                'mutual_friends'    => $mutualFriends,
-                'mutual_count'      => $mutualCount,
+                'mutual_friends' => $mutualFriends,
+                'mutual_count' => $mutualCount,
             ];
         });
 
         return response()->json([
             'success' => true,
             'message' => __('Followers retrieved successfully'),
-            'data'    => $result
+            'data' => $result,
         ], 200);
     }
 
@@ -227,7 +228,7 @@ class ProfileController extends Controller
             $isFollowingBack = $profileUserFollowerIds->has($followedUser->user_id);
 
             $mutualFriends = [];
-            $mutualCount   = 0;
+            $mutualCount = 0;
             if ($currentUser && $currentUser->user_id !== $followedUser->user_id) {
                 $followedUserFollowingIds = $followedUser->following()
                     ->pluck('users.user_id')
@@ -238,26 +239,26 @@ class ProfileController extends Controller
                     ->select('users.user_id', 'users.username', 'users.name', 'users.avatar')
                     ->get();
 
-                $mutualCount   = $mutuals->count();
+                $mutualCount = $mutuals->count();
                 $mutualFriends = $mutuals->take(3)->values()->toArray();
             }
 
             return [
-                'user_id'           => $followedUser->user_id,
-                'username'          => $followedUser->username,
-                'name'              => $followedUser->name,
-                'avatar'            => $followedUser->avatar,
-                'is_following'      => $isFollowing,
+                'user_id' => $followedUser->user_id,
+                'username' => $followedUser->username,
+                'name' => $followedUser->name,
+                'avatar' => $followedUser->avatar,
+                'is_following' => $isFollowing,
                 'is_following_back' => $isFollowingBack,
-                'mutual_friends'    => $mutualFriends,
-                'mutual_count'      => $mutualCount,
+                'mutual_friends' => $mutualFriends,
+                'mutual_count' => $mutualCount,
             ];
         });
 
         return response()->json([
             'success' => true,
             'message' => __('Following retrieved successfully'),
-            'data'    => $result
+            'data' => $result,
         ], 200);
     }
 
@@ -269,7 +270,7 @@ class ProfileController extends Controller
     {
         $user = User::findOrFail($userId);
 
-        $totalRatings  = $user->receivedRatings()->count();
+        $totalRatings = $user->receivedRatings()->count();
         $averageRating = $user->receivedRatings()->avg('rating') ?? 0;
 
         $ratingCounts = $user->receivedRatings()
@@ -280,19 +281,19 @@ class ProfileController extends Controller
 
         $breakdown = [];
         for ($i = 5; $i >= 1; $i--) {
-            $count       = $ratingCounts[$i] ?? 0;
-            $percentage  = $totalRatings > 0 ? round(($count / $totalRatings) * 100, 1) : 0;
+            $count = $ratingCounts[$i] ?? 0;
+            $percentage = $totalRatings > 0 ? round(($count / $totalRatings) * 100, 1) : 0;
             $breakdown[] = ['stars' => $i, 'count' => $count, 'percentage' => $percentage];
         }
 
         return response()->json([
             'success' => true,
             'message' => __('Rating breakdown retrieved successfully'),
-            'data'    => [
-                'total_ratings'  => $totalRatings,
+            'data' => [
+                'total_ratings' => $totalRatings,
                 'average_rating' => round($averageRating, 2),
-                'breakdown'      => $breakdown,
-            ]
+                'breakdown' => $breakdown,
+            ],
         ], 200);
     }
 
@@ -307,7 +308,7 @@ class ProfileController extends Controller
         if ($currentUser->user_id === $userId) {
             return response()->json([
                 'success' => false,
-                'message' => __('You cannot rate yourself')
+                'message' => __('You cannot rate yourself'),
             ], 400);
         }
 
@@ -329,12 +330,12 @@ class ProfileController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => __('Rating updated successfully'),
-                'data'    => $existingRating
+                'data' => $existingRating,
             ], 200);
         }
 
         $rating = Rating::create([
-            'rater_id'      => $currentUser->user_id,
+            'rater_id' => $currentUser->user_id,
             'rated_user_id' => $userId,
             ...$request->validated(),
         ]);
@@ -348,7 +349,7 @@ class ProfileController extends Controller
         return response()->json([
             'success' => true,
             'message' => __('Rating added successfully'),
-            'data'    => $rating
+            'data' => $rating,
         ], 201);
     }
 
@@ -363,14 +364,14 @@ class ProfileController extends Controller
         return response()->json([
             'success' => true,
             'message' => __('Profile updated successfully'),
-            'data'    => [
-                'user_id'    => $currentUser->user_id,
-                'username'   => $currentUser->username,
-                'name'       => $currentUser->name,
-                'email'      => $currentUser->email,
-                'avatar'     => $currentUser->avatar,
+            'data' => [
+                'user_id' => $currentUser->user_id,
+                'username' => $currentUser->username,
+                'name' => $currentUser->name,
+                'email' => $currentUser->email,
+                'avatar' => $currentUser->avatar,
                 'created_at' => $currentUser->created_at->format('F j, Y, g:i A'),
-            ]
+            ],
         ], 200);
     }
 
@@ -385,14 +386,14 @@ class ProfileController extends Controller
         return response()->json([
             'success' => true,
             'message' => __('Personal information retrieved successfully'),
-            'data'    => [
-                'user_id'    => $currentUser->user_id,
-                'username'   => $currentUser->username,
-                'name'       => $currentUser->name,
-                'email'      => $currentUser->email,
-                'avatar'     => $currentUser->avatar,
+            'data' => [
+                'user_id' => $currentUser->user_id,
+                'username' => $currentUser->username,
+                'name' => $currentUser->name,
+                'email' => $currentUser->email,
+                'avatar' => $currentUser->avatar,
                 'created_at' => $currentUser->created_at->format('F j, Y, g:i A'),
-            ]
+            ],
         ], 200);
     }
 }

@@ -13,9 +13,7 @@ class NewChatMessageNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public function __construct(public Message $message)
-    {
-    }
+    public function __construct(public Message $message) {}
 
     public function via(object $notifiable): array
     {
@@ -44,7 +42,7 @@ class NewChatMessageNotification extends Notification implements ShouldQueue
     private function data(): array
     {
         $senderName = $this->message->sender?->name ?? 'System';
-        
+
         $preview = $this->message->body;
         if (empty($preview) && $this->message->image_url) {
             $preview = __('Sent an image');

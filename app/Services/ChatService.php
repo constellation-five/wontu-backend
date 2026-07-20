@@ -7,6 +7,7 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\Offer;
 use App\Models\User;
+use App\Notifications\NewChatMessageNotification;
 
 class ChatService
 {
@@ -145,10 +146,10 @@ class ChatService
 
         if ($message->type !== 'system') {
             $notifyIds = array_diff($recipientIds, [$message->sender_id]);
-            if (!empty($notifyIds)) {
-                $usersToNotify = \App\Models\User::whereIn('user_id', $notifyIds)->get();
+            if (! empty($notifyIds)) {
+                $usersToNotify = User::whereIn('user_id', $notifyIds)->get();
                 foreach ($usersToNotify as $user) {
-                    $user->notify(new \App\Notifications\NewChatMessageNotification($message));
+                    $user->notify(new NewChatMessageNotification($message));
                 }
             }
         }

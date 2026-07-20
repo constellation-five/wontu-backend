@@ -14,7 +14,9 @@ class UserSetting extends Model
     use HasUuids;
 
     protected $primaryKey = 'setting_id';
+
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     protected function casts(): array

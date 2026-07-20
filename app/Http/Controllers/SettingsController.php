@@ -15,7 +15,7 @@ class SettingsController extends Controller
     public function index()
     {
         $user = Auth::user();
-        
+
         $settings = UserSetting::firstOrCreate(
             ['user_id' => $user->user_id],
             [
@@ -32,7 +32,7 @@ class SettingsController extends Controller
                 'notifications' => $settings->notifications,
                 'language' => $settings->language,
                 'dark_mode' => $settings->dark_mode,
-            ]
+            ],
         ], 200);
     }
 
@@ -50,7 +50,7 @@ class SettingsController extends Controller
         ]);
 
         $user = Auth::user();
-        
+
         $settings = UserSetting::firstOrCreate(
             ['user_id' => $user->user_id],
             [
@@ -80,7 +80,7 @@ class SettingsController extends Controller
                 'notifications' => $settings->notifications,
                 'language' => $settings->language,
                 'dark_mode' => $settings->dark_mode,
-            ]
+            ],
         ], 200);
     }
 }
