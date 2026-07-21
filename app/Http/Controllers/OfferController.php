@@ -192,17 +192,30 @@ class OfferController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
+        $offerIds = $orders->pluck('offer_id');
+        $ratedOfferIds = \App\Models\Rating::where('rater_id', $userId)
+            ->whereIn('offer_id', $offerIds)
+            ->pluck('offer_id')
+            ->flip();
+
         return response()->json([
             'status' => 'success',
             'data' => $orders->map(fn ($offerBuyer) => [
                 'offer_id' => $offerBuyer->offer_id,
                 'merchant_name' => $offerBuyer->offer->merchant_name,
+                'merchant_id' => $offerBuyer->offer->seller_id,
+                'location_label' => $offerBuyer->offer->location_label,
+                'closing_time' => $offerBuyer->offer->closing_time,
+                'arrival_time' => $offerBuyer->offer->arrival_time,
+                'closed_at' => $offerBuyer->offer->closed_at,
+                'arrived_at' => $offerBuyer->offer->arrived_at,
                 'is_confirmed' => $offerBuyer->is_confirmed,
                 'payment_proof_url' => $offerBuyer->payment_proof_url,
                 'joined_at' => $offerBuyer->created_at,
                 'payment_submitted_at' => $offerBuyer->payment_submitted_at,
                 'confirmed_at' => $offerBuyer->confirmed_at,
                 'created_at' => $offerBuyer->created_at,
+                'is_rated' => $ratedOfferIds->has($offerBuyer->offer_id),
                 'items' => $offerBuyer->items->map(fn ($buyerItem) => [
                     'item' => $buyerItem->item,
                     'quantity' => $buyerItem->quantity,

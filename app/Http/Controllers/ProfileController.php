@@ -9,6 +9,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Models\Offer;
+use App\Notifications\NewRatingNotification;
 
 class ProfileController extends Controller
 {
@@ -318,6 +320,11 @@ class ProfileController extends Controller
 
         if ($existingRating) {
             $existingRating->update($request->validated());
+            $offer = Offer::find($request->offer_id);
+            if ($offer) {
+                $ratedUser = User::find($userId);
+                $ratedUser->notify(new NewRatingNotification($currentUser, $request->rating, $offer));
+            }
 
             return response()->json([
                 'success' => true,
@@ -331,6 +338,12 @@ class ProfileController extends Controller
             'rated_user_id' => $userId,
             ...$request->validated(),
         ]);
+
+        $offer = Offer::find($request->offer_id);
+        if ($offer) {
+            $ratedUser = User::find($userId);
+            $ratedUser->notify(new NewRatingNotification($currentUser, $request->rating, $offer));
+        }
 
         return response()->json([
             'success' => true,
