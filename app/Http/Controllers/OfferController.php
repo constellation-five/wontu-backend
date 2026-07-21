@@ -7,6 +7,7 @@ use App\Http\Requests\StoreOfferRequest;
 use App\Models\Item;
 use App\Models\Offer;
 use App\Models\OfferBuyer;
+use App\Models\Rating;
 use App\Notifications\BuyerJoinedNotification;
 use App\Notifications\BuyerRemovedFromOfferNotification;
 use App\Notifications\ItemAdjustedNotification;
@@ -169,7 +170,7 @@ class OfferController extends Controller
         $hasRatedSeller = false;
 
         if ($userId) {
-            $hasRatedSeller = \App\Models\Rating::where('rater_id', $userId)
+            $hasRatedSeller = Rating::where('rater_id', $userId)
                 ->where('rated_user_id', $offer->seller_id)
                 ->where('offer_id', $offer->offer_id)
                 ->exists();
@@ -193,7 +194,7 @@ class OfferController extends Controller
             ->get();
 
         $offerIds = $orders->pluck('offer_id');
-        $ratedOfferIds = \App\Models\Rating::where('rater_id', $userId)
+        $ratedOfferIds = Rating::where('rater_id', $userId)
             ->whereIn('offer_id', $offerIds)
             ->pluck('offer_id')
             ->flip();

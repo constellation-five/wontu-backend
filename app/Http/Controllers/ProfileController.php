@@ -4,14 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreRatingRequest;
 use App\Http\Requests\UpdateProfileRequest;
+use App\Models\Offer;
 use App\Models\Rating;
 use App\Models\User;
+use App\Notifications\NewRatingNotification;
 use App\Notifications\UserFollowedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Models\Offer;
-use App\Notifications\NewRatingNotification;
 
 class ProfileController extends Controller
 {

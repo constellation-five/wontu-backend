@@ -21,7 +21,7 @@ class SettingsController extends Controller
             [
                 'notifications' => UserSetting::getDefaultNotifications(),
                 'language' => 'en',
-                'dark_mode' => false,
+                'theme' => 'system',
             ]
         );
 
@@ -31,7 +31,7 @@ class SettingsController extends Controller
             'data' => [
                 'notifications' => $settings->notifications,
                 'language' => $settings->language,
-                'dark_mode' => $settings->dark_mode,
+                'theme' => $settings->theme,
             ],
         ], 200);
     }
@@ -46,7 +46,7 @@ class SettingsController extends Controller
             'notifications.*.push' => 'sometimes|boolean',
             'notifications.*.email' => 'sometimes|boolean',
             'language' => ['sometimes', 'string', Rule::in(['en', 'id'])],
-            'dark_mode' => 'sometimes|boolean',
+            'theme' => ['sometimes', 'string', Rule::in(['system', 'light', 'dark'])],
         ]);
 
         $user = Auth::user();
@@ -56,7 +56,7 @@ class SettingsController extends Controller
             [
                 'notifications' => UserSetting::getDefaultNotifications(),
                 'language' => 'en',
-                'dark_mode' => false,
+                'theme' => 'system',
             ]
         );
 
@@ -67,8 +67,8 @@ class SettingsController extends Controller
         if (isset($validated['language'])) {
             $settings->language = $validated['language'];
         }
-        if (isset($validated['dark_mode'])) {
-            $settings->dark_mode = $validated['dark_mode'];
+        if (isset($validated['theme'])) {
+            $settings->theme = $validated['theme'];
         }
 
         $settings->save();
@@ -79,7 +79,7 @@ class SettingsController extends Controller
             'data' => [
                 'notifications' => $settings->notifications,
                 'language' => $settings->language,
-                'dark_mode' => $settings->dark_mode,
+                'theme' => $settings->theme,
             ],
         ], 200);
     }
