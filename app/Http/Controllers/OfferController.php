@@ -10,9 +10,12 @@ use App\Models\OfferBuyer;
 use App\Models\Rating;
 use App\Notifications\BuyerJoinedNotification;
 use App\Notifications\BuyerRemovedFromOfferNotification;
+use App\Notifications\FollowingUserNewOfferNotification;
 use App\Notifications\ItemAdjustedNotification;
 use App\Notifications\ItemsArrivedNotification;
+use App\Notifications\OfferClosedNotification;
 use App\Notifications\OfferCompletedNotification;
+use App\Notifications\OfferCreatedFromLikedRequestNotification;
 use App\Notifications\OfferDeletedNotification;
 use App\Notifications\OfferEditedNotification;
 use App\Notifications\OrderCancelledNotification;
@@ -153,12 +156,16 @@ class OfferController extends Controller
 
         $this->chatService->getOrCreateGroupConversation($offer);
 
-        if (!empty($validated['based_on_request_id'])) {
+        foreach ($request->user()->followers as $follower) {
+            $follower->notify(new FollowingUserNewOfferNotification($request->user(), $offer));
+        }
+
+        if (! empty($validated['based_on_request_id'])) {
             $reqModel = \App\Models\Request::find($validated['based_on_request_id']);
             if ($reqModel) {
                 $voters = $reqModel->voters()->where('users.user_id', '!=', $request->user()->user_id)->get();
                 foreach ($voters as $voter) {
-                    $voter->notify(new \App\Notifications\OfferCreatedFromLikedRequestNotification($offer, $reqModel));
+                    $voter->notify(new OfferCreatedFromLikedRequestNotification($offer, $reqModel));
                 }
             }
         }
@@ -293,6 +300,10 @@ class OfferController extends Controller
 
         $offer->closed_at = now();
         $offer->save();
+
+        foreach ($offer->buyers as $buyer) {
+            $buyer->notify(new OfferClosedNotification($offer));
+        }
 
         $conversation = $this->chatService->getOrCreateGroupConversation($offer);
         $this->chatService->postSystemMessage(
@@ -1028,11 +1039,11 @@ class OfferController extends Controller
             $offer->closing_time = Carbon::parse($validated['closing_time'])->format('Y-m-d H:i:s');
             $offer->arrival_time = Carbon::parse($validated['arrival_time'])->format('Y-m-d H:i:s');
             $offer->has_cod_payment = $validated['has_cod_payment'] ?? false;
-            
+
             // Reset notifications state on edit
             $offer->notified_sold_out_early = false;
             $offer->notified_closing_reached = false;
-            
+
             $offer->save();
 
             // Step 6: sync payment methods.

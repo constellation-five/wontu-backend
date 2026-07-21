@@ -89,10 +89,11 @@ class AppServiceProvider extends ServiceProvider
         $settings = UserSetting::where('user_id', $user->user_id)->first();
 
         if (! $settings || empty($settings->notifications)) {
-            return true;
+            $defaultSettings = UserSetting::getDefaultNotifications();
+            return $defaultSettings[$category]['email'] ?? false;
         }
 
-        return ($settings->notifications[$category]['email'] ?? true) !== false;
+        return ($settings->notifications[$category]['email'] ?? false) !== false;
     }
 
     private function wantsPushFor(User $user, Notification $notification): bool
@@ -106,8 +107,8 @@ class AppServiceProvider extends ServiceProvider
         $settings = UserSetting::where('user_id', $user->user_id)->first();
 
         if (! $settings || empty($settings->notifications)) {
-            // Check default push setting from UserSetting
-            return false;
+            $defaultSettings = UserSetting::getDefaultNotifications();
+            return $defaultSettings[$category]['push'] ?? false;
         }
 
         return ($settings->notifications[$category]['push'] ?? false) !== false;

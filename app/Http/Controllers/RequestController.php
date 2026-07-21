@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Request as RequestModel;
 use App\Models\RequestVoter;
+use App\Notifications\FollowingUserNewRequestNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -84,6 +85,10 @@ class RequestController extends Controller
             'request_id' => $newRequest->request_id,
             'user_id' => $userId,
         ]);
+
+        foreach (Auth::user()->followers as $follower) {
+            $follower->notify(new FollowingUserNewRequestNotification(Auth::user(), $newRequest));
+        }
 
         return response()->json([
             'message' => __('Successfully created'),

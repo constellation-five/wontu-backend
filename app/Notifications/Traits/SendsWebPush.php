@@ -21,7 +21,7 @@ trait SendsWebPush
         $data = $this->data();
 
         $title = isset($data['template_key'])
-            ? __('notifications.'.$data['template_key'].'.title')
+            ? __('notifications.'.$data['template_key'].'.title', $data['params'] ?? [])
             : ($data['title'] ?? 'Wontu Notification');
 
         $body = isset($data['template_key'])

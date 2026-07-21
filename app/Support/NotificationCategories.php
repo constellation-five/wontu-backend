@@ -4,6 +4,8 @@ namespace App\Support;
 
 use App\Notifications\BuyerJoinedNotification;
 use App\Notifications\BuyerRemovedFromOfferNotification;
+use App\Notifications\FollowingUserNewOfferNotification;
+use App\Notifications\FollowingUserNewRequestNotification;
 use App\Notifications\ItemAdjustedNotification;
 use App\Notifications\ItemsArrivedNotification;
 use App\Notifications\NewChatMessageNotification;
@@ -11,6 +13,7 @@ use App\Notifications\OfferAutoClosedSoldOutNotification;
 use App\Notifications\OfferClosedNotification;
 use App\Notifications\OfferClosingReachedNotSoldOutNotification;
 use App\Notifications\OfferCompletedNotification;
+use App\Notifications\OfferCreatedFromLikedRequestNotification;
 use App\Notifications\OfferDeletedNotification;
 use App\Notifications\OfferEditedNotification;
 use App\Notifications\OfferSoldOutEarlyNotification;
@@ -68,7 +71,6 @@ class NotificationCategories
                 'description' => 'An offer you\'ve joined is edited, closed, deleted, or completed, or your order on it is adjusted or removed.',
                 'notifications' => [
                     OfferEditedNotification::class,
-                    OfferEditedDisruptiveNotification::class,
                     BuyerRemovedFromOfferNotification::class,
                     ItemAdjustedNotification::class,
                     OfferClosedNotification::class,
@@ -96,6 +98,14 @@ class NotificationCategories
                 'description' => 'You receive a new message in a group or private chat.',
                 'notifications' => [
                     NewChatMessageNotification::class,
+                ],
+            ],
+            'following-new-posts' => [
+                'label' => 'Following new posts',
+                'description' => 'Someone you follow creates a new offer or request.',
+                'notifications' => [
+                    FollowingUserNewOfferNotification::class,
+                    FollowingUserNewRequestNotification::class,
                 ],
             ],
         ];

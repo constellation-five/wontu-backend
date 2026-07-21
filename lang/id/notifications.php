@@ -101,4 +101,12 @@ return [
         'title' => 'Offer Diperbarui',
         'description' => 'Offer :merchant_name diperbarui oleh penjual.',
     ],
+    'NOTIF_FOLLOWING_NEW_OFFER' => [
+        'title' => 'Offer Baru dari :user_name',
+        'description' => ':user_name baru saja membuat offer baru: :offer_name.',
+    ],
+    'NOTIF_FOLLOWING_NEW_REQUEST' => [
+        'title' => 'Request Baru dari :user_name',
+        'description' => ':user_name baru saja membuat request baru: :request_name.',
+    ],
 ];

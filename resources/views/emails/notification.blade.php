@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ isset($data['template_key']) ? __('notifications.' . $data['template_key'] . '.title') : ($data['title'] ?? 'Notification from Wontu') }}</title>
+    <title>{{ isset($data['template_key']) ? __('notifications.' . $data['template_key'] . '.title', $data['params'] ?? []) : ($data['title'] ?? __('emails.title')) }}</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -158,7 +158,7 @@
                             </div>
                         </td>
                         <td valign="middle">
-                            <h2 class="title">{{ isset($data['template_key']) ? __('notifications.' . $data['template_key'] . '.title') : ($data['title'] ?? 'Notification') }}</h2>
+                            <h2 class="title">{{ isset($data['template_key']) ? __('notifications.' . $data['template_key'] . '.title', $data['params'] ?? []) : ($data['title'] ?? __('emails.title')) }}</h2>
                         </td>
                     </tr>
                 </table>
@@ -171,7 +171,7 @@
                     <div class="action-button-container">
                         <a href="{{ env('FRONTEND_URL', 'http://localhost:4200') }}{{ $data['action_url'] }}"
                             class="action-button">
-                            View Details
+                            {{ __('emails.view_details') }}
                         </a>
                     </div>
                 @endif
@@ -179,8 +179,8 @@
 
             <!-- Footer -->
             <div class="footer">
-                <p>&copy; {{ date('Y') }} Wontu. All rights reserved.</p>
-                <p>You're receiving this email because of your activity on Wontu.</p>
+                <p>{{ __('emails.footer_copyright', ['year' => date('Y')]) }}</p>
+                <p>{{ __('emails.footer_reason') }}</p>
             </div>
         </div>
     </div>
