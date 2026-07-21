@@ -33,7 +33,10 @@ Route::get('/offers/{offer}/payment-methods', [OfferController::class, 'getPayme
 
 Route::middleware('auth')->group(function () {
     Route::get('/user', function (Request $request) {
-        return $request->user();
+        $user = $request->user();
+        $userData = $user->toArray();
+        $userData['language'] = $user->preferredLocale();
+        return $userData;
     });
 
     // Offers Routes
