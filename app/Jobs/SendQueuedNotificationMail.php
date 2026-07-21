@@ -23,6 +23,12 @@ class SendQueuedNotificationMail implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public static bool $isSending = false;
+
+    public int $tries = 0;
+
+    public int $maxExceptions = 3;
+
     public function __construct(
         public readonly mixed $notifiable,
         public readonly Notification $notification,
@@ -35,9 +41,15 @@ class SendQueuedNotificationMail implements ShouldQueue
 
     public function handle(): void
     {
-        // Bypass via() (which still lists 'broadcast'/'database' too) and
-        // send only the mail channel — those other channels were already
-        // sent synchronously before this job was queued.
-        NotificationFacade::sendNow($this->notifiable, $this->notification, ['mail']);
+        self::$isSending = true;
+
+        try {
+            // Bypass via() (which still lists 'broadcast'/'database' too) and
+            // send only the mail channel — those other channels were already
+            // sent synchronously before this job was queued.
+            NotificationFacade::sendNow($this->notifiable, $this->notification, ['mail']);
+        } finally {
+            self::$isSending = false;
+        }
     }
 }

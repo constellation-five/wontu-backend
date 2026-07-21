@@ -48,6 +48,10 @@ class AppServiceProvider extends ServiceProvider
                 return true;
             }
 
+            if (SendQueuedNotificationMail::$isSending) {
+                return true;
+            }
+
             if ($event->notifiable instanceof User && ! $this->wantsEmailFor($event->notifiable, $event->notification)) {
                 return false;
             }
