@@ -12,11 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('request_voters', function (Blueprint $table) {
-            $table->unsignedBigInteger('request_id'); 
+            $table->unsignedBigInteger('request_id');
             $table->uuid('user_id');
 
             $table->primary(['request_id', 'user_id']);
-            
+
             $table->foreign('request_id')->references('request_id')->on('requests')->onDelete('cascade');
             $table->foreign('user_id')->references('user_id')->on('users')->onDelete('cascade');
         });

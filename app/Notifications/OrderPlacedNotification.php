@@ -37,15 +37,15 @@ class OrderPlacedNotification extends Notification implements ShouldBroadcastNow
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('New Order Placed - Wontu')
+            ->subject(__('New Order Placed - Wontu'))
             ->view('emails.notification', ['data' => $this->data()]);
     }
 
     private function data(): array
     {
         return [
-            'title' => 'New Order Placed',
-            'description' => "{$this->buyer->name} placed an order in your {$this->offer->merchant_name} offer.",
+            'template_key' => 'NOTIF_ORDER_PLACED',
+            'params' => ['buyer_name' => $this->buyer->name, 'merchant_name' => $this->offer->merchant_name],
             'icon' => 'shopping_cart',
             'notification_type' => 'success',
             'action_url' => "/offers/{$this->offer->offer_id}",

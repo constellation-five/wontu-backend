@@ -35,15 +35,15 @@ class OfferDeletedNotification extends Notification implements ShouldBroadcastNo
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Offer Deleted - Wontu')
+            ->subject(__('Offer Deleted - Wontu'))
             ->view('emails.notification', ['data' => $this->data()]);
     }
 
     private function data(): array
     {
         return [
-            'title' => 'Offer Deleted',
-            'description' => "The {$this->offer->merchant_name} offer you joined was deleted by the seller. Your order has been cancelled.",
+            'template_key' => 'NOTIF_OFFER_DELETED',
+            'params' => ['merchant_name' => $this->offer->merchant_name],
             'icon' => 'delete',
             'notification_type' => 'error',
             'action_url' => '/offers',

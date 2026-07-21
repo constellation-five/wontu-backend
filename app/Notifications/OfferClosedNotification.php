@@ -35,15 +35,15 @@ class OfferClosedNotification extends Notification implements ShouldBroadcastNow
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Offer Closed - Wontu')
+            ->subject(__('Offer Closed - Wontu'))
             ->view('emails.notification', ['data' => $this->data()]);
     }
 
     private function data(): array
     {
         return [
-            'title' => 'Offer Closed',
-            'description' => "The {$this->offer->merchant_name} offer you joined has been closed.",
+            'template_key' => 'NOTIF_OFFER_CLOSED',
+            'params' => ['merchant_name' => $this->offer->merchant_name],
             'icon' => 'inventory_2',
             'notification_type' => 'info',
             'action_url' => "/offers/{$this->offer->offer_id}",

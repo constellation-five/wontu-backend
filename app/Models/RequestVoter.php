@@ -10,8 +10,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class RequestVoter extends Model
 {
     protected $table = 'request_voters';
-    public $timestamps = false; 
-    public $incrementing = false; 
+
+    public $timestamps = false;
+
+    public $incrementing = false;
 
     public function request(): BelongsTo
     {

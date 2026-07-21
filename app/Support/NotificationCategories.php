@@ -6,6 +6,7 @@ use App\Notifications\BuyerJoinedNotification;
 use App\Notifications\BuyerRemovedFromOfferNotification;
 use App\Notifications\ItemAdjustedNotification;
 use App\Notifications\ItemsArrivedNotification;
+use App\Notifications\NewChatMessageNotification;
 use App\Notifications\OfferAutoClosedSoldOutNotification;
 use App\Notifications\OfferClosedNotification;
 use App\Notifications\OfferClosingReachedNotSoldOutNotification;
@@ -19,7 +20,6 @@ use App\Notifications\OrderUpdatedNotification;
 use App\Notifications\PaymentConfirmedNotification;
 use App\Notifications\PaymentProofUploadedNotification;
 use App\Notifications\UserFollowedNotification;
-use App\Notifications\NewChatMessageNotification;
 use Illuminate\Notifications\Notification;
 
 /**

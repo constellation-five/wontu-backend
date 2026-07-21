@@ -44,7 +44,7 @@ class OfferController extends Controller
     {
         if ($offer->seller_id === $userId) {
             return response()->json([
-                'message' => 'Penjual tidak bisa memesan di penawarannya sendiri.',
+                'message' => __('The seller cannot order from their own offer.'),
             ], 403);
         }
 
@@ -55,7 +55,7 @@ class OfferController extends Controller
     {
         if ($offer->closed_at !== null) {
             return response()->json([
-                'message' => 'Offer ini sudah ditutup dan tidak menerima pesanan baru.',
+                'message' => __('This offer is closed and does not accept new orders.'),
             ], 409);
         }
 
@@ -76,14 +76,14 @@ class OfferController extends Controller
         // Validasi: current_slot tidak boleh negatif (kecuali diizinkan untuk rollback)
         if (! $allowNegative && $newCurrentSlot < 0) {
             return response()->json([
-                'message' => "Tidak bisa mengurangi stok item '{$item->item_name}' lebih dari yang sudah dipesan.",
+                'message' => __('Tidak bisa mengurangi stok item \':item_name\' lebih dari yang sudah dipesan.', ['item_name' => $item->item_name]),
             ], 400);
         }
 
         // Validasi: current_slot tidak boleh melebihi slot
         if ($newCurrentSlot > $item->slot) {
             return response()->json([
-                'message' => "Stok item '{$item->item_name}' tidak cukup.",
+                'message' => __('Stok item \':item_name\' tidak cukup.', ['item_name' => $item->item_name]),
                 'available' => $item->slot - $item->current_slot,
             ], 400);
         }
@@ -153,7 +153,7 @@ class OfferController extends Controller
         $this->chatService->getOrCreateGroupConversation($offer);
 
         return response()->json([
-            'message' => 'Offer created successfully.',
+            'message' => __('Offer created successfully.'),
             'offer' => $offer->load('items'),
         ], 201);
     }
@@ -269,13 +269,13 @@ class OfferController extends Controller
     {
         if ($offer->seller_id !== $request->user()->user_id) {
             return response()->json([
-                'message' => 'Hanya penjual yang bisa menutup offer ini.',
+                'message' => __('Only the seller can close this offer.'),
             ], 403);
         }
 
         if ($offer->closed_at) {
             return response()->json([
-                'message' => 'Offer sudah ditutup.',
+                'message' => __('Offer is already closed.'),
             ], 409);
         }
 
@@ -285,8 +285,8 @@ class OfferController extends Controller
         $conversation = $this->chatService->getOrCreateGroupConversation($offer);
         $this->chatService->postSystemMessage(
             $conversation,
-            'Offer Closed',
-            "The {$offer->merchant_name} offer has been closed by the seller and is no longer accepting orders.",
+            'SYS_OFFER_CLOSED',
+            ['merchant_name' => $offer->merchant_name],
             'lock',
             'info',
         );
@@ -294,7 +294,7 @@ class OfferController extends Controller
         broadcast(new OfferUpdated($offer->offer_id));
 
         return response()->json([
-            'message' => 'Offer berhasil ditutup.',
+            'message' => __('Offer closed successfully.'),
             'offer' => $offer->fresh(['items']),
         ], 200);
     }
@@ -307,20 +307,20 @@ class OfferController extends Controller
     {
         if ($offer->seller_id !== $request->user()->user_id) {
             return response()->json([
-                'message' => 'Hanya penjual yang bisa menandai offer ini sebagai tiba.',
+                'message' => __('Only the seller can mark this offer as arrived.'),
             ], 403);
         }
 
         if ($offer->arrived_at) {
             return response()->json([
-                'message' => 'Offer sudah ditandai sebagai tiba.',
+                'message' => __('Offer has already been marked as arrived.'),
             ], 409);
         }
 
         $offer->arrived_at = now();
         $offer->save();
 
-        broadcast(new \App\Events\OfferUpdated($offer->offer_id));
+        broadcast(new OfferUpdated($offer->offer_id));
 
         foreach ($offer->buyers as $buyer) {
             $buyer->notify(new ItemsArrivedNotification($offer));
@@ -330,15 +330,18 @@ class OfferController extends Controller
         $chatClosesAt = $conversation->chatClosesAt();
         $this->chatService->postSystemMessage(
             $conversation,
-            'Items Have Arrived',
-            "The items for the {$offer->merchant_name} offer have arrived. This chat will close to new messages on {$chatClosesAt->toDayDateTimeString()}.",
+            'SYS_ITEMS_ARRIVED',
+            [
+                'merchant_name' => $offer->merchant_name,
+                'chat_closes_at' => $chatClosesAt->toDayDateTimeString(),
+            ],
             'local_shipping',
             'success',
             ['chat_closes_at' => $chatClosesAt->toISOString()],
         );
 
         return response()->json([
-            'message' => 'Offer berhasil ditandai sebagai tiba.',
+            'message' => __('Offer marked as arrived successfully.'),
             'offer' => $offer->fresh(['items']),
         ], 200);
     }
@@ -362,7 +365,7 @@ class OfferController extends Controller
 
         if (! $offerBuyer) {
             return response()->json([
-                'message' => 'Anda tidak memiliki pesanan di offer ini.',
+                'message' => __('You do not have an order in this offer.'),
             ], 404);
         }
 
@@ -372,12 +375,12 @@ class OfferController extends Controller
         }
         $offerBuyer->save();
 
-        broadcast(new \App\Events\OfferUpdated($offer->offer_id));
+        broadcast(new OfferUpdated($offer->offer_id));
 
         $offer->seller->notify(new PaymentProofUploadedNotification($request->user(), $offer));
 
         return response()->json([
-            'message' => 'Bukti pembayaran berhasil dikirim.',
+            'message' => __('Payment proof sent successfully.'),
             'offer_buyer' => $offerBuyer->fresh(),
         ], 200);
     }
@@ -391,7 +394,7 @@ class OfferController extends Controller
 
         if ($offer->seller_id === $userId) {
             return response()->json([
-                'message' => 'You cannot join your own offer.',
+                'message' => __('You cannot join your own offer.'),
             ], 403);
         }
 
@@ -414,15 +417,18 @@ class OfferController extends Controller
             $conversation = $this->chatService->getOrCreateGroupConversation($offer);
             $this->chatService->postSystemMessage(
                 $conversation,
-                'Buyer Joined',
-                "{$request->user()->name} joined the {$offer->merchant_name} offer.",
+                'SYS_BUYER_JOINED',
+                [
+                    'user_name' => $request->user()->name,
+                    'merchant_name' => $offer->merchant_name,
+                ],
                 'group_add',
                 'info',
             );
         }
 
         return response()->json([
-            'message' => 'Berhasil bergabung dengan offer.',
+            'message' => __('Successfully joined the offer.'),
             'offer' => $offer->fresh()->load('items', 'buyers'),
         ], 200);
     }
@@ -434,13 +440,13 @@ class OfferController extends Controller
     {
         if ($offer->seller_id !== $request->user()->user_id) {
             return response()->json([
-                'message' => 'Hanya penjual yang bisa menyelesaikan offer ini.',
+                'message' => __('Only the seller can complete this offer.'),
             ], 403);
         }
 
         if ($offer->is_completed) {
             return response()->json([
-                'message' => 'Offer sudah selesai.',
+                'message' => __('Offer is already complete.'),
             ], 409);
         }
 
@@ -454,8 +460,8 @@ class OfferController extends Controller
         $conversation = $this->chatService->getOrCreateGroupConversation($offer);
         $this->chatService->postSystemMessage(
             $conversation,
-            'Offer Completed',
-            "The {$offer->merchant_name} offer has been marked as completed.",
+            'SYS_OFFER_COMPLETED',
+            ['merchant_name' => $offer->merchant_name],
             'check_circle',
             'success',
         );
@@ -463,7 +469,7 @@ class OfferController extends Controller
         broadcast(new OfferUpdated($offer->offer_id));
 
         return response()->json([
-            'message' => 'Offer berhasil diselesaikan.',
+            'message' => __('Offer completed successfully.'),
             'offer' => $offer->fresh(),
         ], 200);
     }
@@ -472,7 +478,7 @@ class OfferController extends Controller
     {
         if ($offer->closed_at) {
             return response()->json([
-                'message' => 'Offer sudah ditutup. Anda tidak dapat membuat pesanan baru.',
+                'message' => __('Offer is already closed. You cannot make a new order.'),
             ], 403);
         }
         $userId = $request->user()->user_id;
@@ -499,7 +505,7 @@ class OfferController extends Controller
 
             if ($existing) {
                 return response()->json([
-                    'message' => 'Anda sudah memiliki pesanan di offer ini.',
+                    'message' => __('You already have an order in this offer.'),
                 ], 409);
             }
 
@@ -530,18 +536,21 @@ class OfferController extends Controller
             $conversation = $this->chatService->getOrCreateGroupConversation($offer);
             $this->chatService->postSystemMessage(
                 $conversation,
-                'Buyer Joined',
-                "{$request->user()->name} joined the {$offer->merchant_name} offer.",
+                'SYS_BUYER_JOINED',
+                [
+                    'user_name' => $request->user()->name,
+                    'merchant_name' => $offer->merchant_name,
+                ],
                 'group_add',
                 'info',
             );
 
             $offer->seller->notify(new OrderPlacedNotification($request->user(), $offer));
 
-            \Illuminate\Support\Facades\DB::afterCommit(fn () => broadcast(new OfferUpdated($offer->offer_id)));
+            DB::afterCommit(fn () => broadcast(new OfferUpdated($offer->offer_id)));
 
             return response()->json([
-                'message' => 'Pesanan berhasil diproses dan Anda telah bergabung.',
+                'message' => __('Order processed successfully and you have joined.'),
                 'offer' => $offer->load('items', 'buyers'),
             ], 200);
         });
@@ -551,7 +560,7 @@ class OfferController extends Controller
     {
         if ($offer->closed_at) {
             return response()->json([
-                'message' => 'Offer sudah ditutup. Anda tidak dapat mengubah pesanan.',
+                'message' => __('Offer is already closed. You cannot change your order.'),
             ], 403);
         }
         $validated = $request->validate([
@@ -573,10 +582,10 @@ class OfferController extends Controller
 
             $offer->seller->notify(new OrderUpdatedNotification($request->user(), $offer));
 
-            \Illuminate\Support\Facades\DB::afterCommit(fn () => broadcast(new OfferUpdated($offer->offer_id)));
+            DB::afterCommit(fn () => broadcast(new OfferUpdated($offer->offer_id)));
 
             return response()->json([
-                'message' => 'Pesanan berhasil diupdate.',
+                'message' => __('Order updated successfully.'),
                 'offer' => $offer->fresh()->load('items'),
             ], 200);
         });
@@ -609,7 +618,7 @@ class OfferController extends Controller
 
             if (! $offerBuyer) {
                 return response()->json([
-                    'message' => 'Anda tidak memiliki pesanan di offer ini.',
+                    'message' => __('You do not have an order in this offer.'),
                 ], 404);
             }
 
@@ -646,10 +655,10 @@ class OfferController extends Controller
 
             $offer->seller->notify(new OrderUpdatedNotification($request->user(), $offer));
 
-            \Illuminate\Support\Facades\DB::afterCommit(fn () => broadcast(new OfferUpdated($offer->offer_id)));
+            DB::afterCommit(fn () => broadcast(new OfferUpdated($offer->offer_id)));
 
             return response()->json([
-                'message' => 'Pesanan berhasil diproses.',
+                'message' => __('Order processed successfully.'),
                 'offer' => $offer->fresh()->load('items', 'buyers'),
             ], 200);
         });
@@ -659,7 +668,7 @@ class OfferController extends Controller
     {
         if ($offer->closed_at) {
             return response()->json([
-                'message' => 'Offer sudah ditutup. Anda tidak dapat membatalkan pesanan.',
+                'message' => __('Offer is already closed. You cannot cancel your order.'),
             ], 403);
         }
         $userId = $request->user()->user_id;
@@ -672,7 +681,7 @@ class OfferController extends Controller
 
             if (! $offerBuyer) {
                 return response()->json([
-                    'message' => 'Anda tidak memiliki pesanan di offer ini.',
+                    'message' => __('You do not have an order in this offer.'),
                 ], 404);
             }
 
@@ -695,16 +704,19 @@ class OfferController extends Controller
             $conversation = $this->chatService->getOrCreateGroupConversation($offer);
             $this->chatService->postSystemMessage(
                 $conversation,
-                'Buyer Left',
-                "{$request->user()->name} left the {$offer->merchant_name} offer.",
+                'SYS_BUYER_LEFT',
+                [
+                    'user_name' => $request->user()->name,
+                    'merchant_name' => $offer->merchant_name,
+                ],
                 'group_remove',
                 'info',
             );
 
-            \Illuminate\Support\Facades\DB::afterCommit(fn () => broadcast(new OfferUpdated($offer->offer_id)));
+            DB::afterCommit(fn () => broadcast(new OfferUpdated($offer->offer_id)));
 
             return response()->json([
-                'message' => 'Pesanan berhasil dibatalkan dan stok dikembalikan.',
+                'message' => __('Order cancelled and stock returned successfully.'),
                 'offer' => $offer->fresh()->load('items', 'buyers'),
             ], 200);
         });
@@ -734,7 +746,7 @@ class OfferController extends Controller
     {
         if ($offer->seller_id !== $request->user()->user_id) {
             return response()->json([
-                'message' => 'Hanya penjual yang bisa melihat pesanan offer ini.',
+                'message' => __('Only the seller can view orders for this offer.'),
             ], 403);
         }
 
@@ -772,13 +784,13 @@ class OfferController extends Controller
     {
         if ($offer->seller_id !== $request->user()->user_id) {
             return response()->json([
-                'message' => 'Hanya penjual yang bisa mengonfirmasi pembayaran ini.',
+                'message' => __('Only the seller can confirm this payment.'),
             ], 403);
         }
 
         if ($offerBuyer->offer_id !== $offer->offer_id) {
             return response()->json([
-                'message' => 'Pesanan tidak ditemukan pada offer ini.',
+                'message' => __('Order not found in this offer.'),
             ], 404);
         }
 
@@ -801,7 +813,7 @@ class OfferController extends Controller
         broadcast(new OfferUpdated($offer->offer_id));
 
         return response()->json([
-            'message' => 'Pembayaran berhasil dikonfirmasi.',
+            'message' => __('Payment confirmed successfully.'),
             'offer_buyer' => $offerBuyer->fresh(),
             'offer' => $offer->fresh(['items']),
         ], 200);
@@ -828,12 +840,12 @@ class OfferController extends Controller
     {
         if ($offer->closed_at) {
             return response()->json([
-                'message' => 'Offer sudah ditutup. Anda tidak dapat mengubah detail offer.',
+                'message' => __('Offer is already closed. You cannot change offer details.'),
             ], 403);
         }
         if ($offer->seller_id !== $request->user()->user_id) {
             return response()->json([
-                'message' => 'Hanya penjual yang bisa mengubah offer ini.',
+                'message' => __('Only the seller can edit this offer.'),
             ], 403);
         }
 
@@ -1065,16 +1077,16 @@ class OfferController extends Controller
             $conversation = $this->chatService->getOrCreateGroupConversation($offer);
             $this->chatService->postSystemMessage(
                 $conversation,
-                'Offer Updated',
-                "The {$offer->merchant_name} offer was updated by the seller.",
+                'SYS_OFFER_UPDATED',
+                ['merchant_name' => $offer->merchant_name],
                 'edit',
                 'info',
             );
 
-            \Illuminate\Support\Facades\DB::afterCommit(fn () => broadcast(new OfferUpdated($offer->offer_id)));
+            DB::afterCommit(fn () => broadcast(new OfferUpdated($offer->offer_id)));
 
             return response()->json([
-                'message' => 'Offer updated successfully.',
+                'message' => __('Offer updated successfully.'),
                 'offer' => $offer->fresh()->load('items'),
             ], 200);
         });
@@ -1087,12 +1099,12 @@ class OfferController extends Controller
     {
         if ($offer->closed_at) {
             return response()->json([
-                'message' => 'Offer sudah ditutup. Anda tidak dapat menghapus offer ini.',
+                'message' => __('Offer is already closed. You cannot delete this offer.'),
             ], 403);
         }
         if ($offer->seller_id !== $request->user()->user_id) {
             return response()->json([
-                'message' => 'Hanya penjual yang bisa menghapus offer ini.',
+                'message' => __('Only the seller can delete this offer.'),
             ], 403);
         }
 
@@ -1106,7 +1118,7 @@ class OfferController extends Controller
         broadcast(new OfferUpdated($offerId));
 
         return response()->json([
-            'message' => 'Offer deleted successfully.',
+            'message' => __('Offer deleted successfully.'),
         ], 200);
     }
 
@@ -1131,12 +1143,12 @@ class OfferController extends Controller
 
         if (! $offerBuyer) {
             return response()->json([
-                'message' => 'Anda tidak memiliki pesanan di offer ini.',
+                'message' => __('You do not have an order in this offer.'),
             ], 404);
         }
 
         return response()->json([
-            'message' => 'Pesanan Anda tetap dipertahankan.',
+            'message' => __('Your order has been kept.'),
         ], 200);
     }
 

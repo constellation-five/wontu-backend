@@ -36,7 +36,7 @@ class BuyerRemovedFromOfferNotification extends Notification implements ShouldBr
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Your Order Was Removed - Wontu')
+            ->subject(__('Your Order Was Removed - Wontu'))
             ->view('emails.notification', ['data' => $this->data()]);
     }
 
@@ -45,8 +45,8 @@ class BuyerRemovedFromOfferNotification extends Notification implements ShouldBr
         $items = implode(', ', $this->removedItemNames);
 
         return [
-            'title' => 'Your Order Was Removed',
-            'description' => "Your order in the {$this->offer->merchant_name} offer was removed because the seller reduced the available stock ({$items}).",
+            'template_key' => 'NOTIF_BUYER_REMOVED_FROM_OFFER',
+            'params' => ['merchant_name' => $this->offer->merchant_name, 'items' => $items],
             'icon' => 'remove_shopping_cart',
             'notification_type' => 'error',
             'action_url' => "/offers/{$this->offer->offer_id}",

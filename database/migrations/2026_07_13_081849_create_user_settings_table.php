@@ -14,22 +14,22 @@ return new class extends Migration
         Schema::create('user_settings', function (Blueprint $table) {
             $table->uuid('setting_id')->primary();
             $table->uuid('user_id');
-            
+
             // Notification settings - JSON untuk flexibility
             $table->json('notifications')->nullable();
-            
+
             // Preferences
             $table->string('language', 20)->default('english');
             $table->boolean('dark_mode')->default(false);
-            
+
             $table->timestamps();
-            
+
             // Foreign key
             $table->foreign('user_id')
                 ->references('user_id')
                 ->on('users')
                 ->onDelete('cascade');
-            
+
             // Ensure one setting per user
             $table->unique('user_id');
         });

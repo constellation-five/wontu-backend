@@ -33,14 +33,14 @@ class NotificationController extends Controller
 
         $notification->markAsRead();
 
-        return response()->json(['message' => 'Notification marked as read.']);
+        return response()->json(['message' => __('Notification marked as read.')]);
     }
 
     public function markAllRead(Request $request): JsonResponse
     {
         $request->user()->unreadNotifications->markAsRead();
 
-        return response()->json(['message' => 'All notifications marked as read.']);
+        return response()->json(['message' => __('All notifications marked as read.')]);
     }
 
     public function destroy(Request $request, string $id): JsonResponse
@@ -50,13 +50,13 @@ class NotificationController extends Controller
             ->findOrFail($id)
             ->delete();
 
-        return response()->json(['message' => 'Notification deleted.']);
+        return response()->json(['message' => __('Notification deleted.')]);
     }
 
     public function destroyAll(Request $request): JsonResponse
     {
         $request->user()->notifications()->delete();
 
-        return response()->json(['message' => 'All notifications cleared.']);
+        return response()->json(['message' => __('All notifications cleared.')]);
     }
 }

@@ -35,15 +35,15 @@ class UserFollowedNotification extends Notification implements ShouldBroadcastNo
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('New Follower - Wontu')
+            ->subject(__('New Follower - Wontu'))
             ->view('emails.notification', ['data' => $this->data()]);
     }
 
     private function data(): array
     {
         return [
-            'title' => 'New Follower',
-            'description' => "{$this->follower->name} started following you.",
+            'template_key' => 'NOTIF_USER_FOLLOWED',
+            'params' => ['follower_name' => $this->follower->name],
             'icon' => 'person_add',
             'notification_type' => 'info',
             'action_url' => "/profile/{$this->follower->user_id}",

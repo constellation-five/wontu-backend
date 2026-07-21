@@ -13,9 +13,7 @@ class NewChatMessageNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public function __construct(public Message $message)
-    {
-    }
+    public function __construct(public Message $message) {}
 
     public function via(object $notifiable): array
     {
@@ -37,22 +35,26 @@ class NewChatMessageNotification extends Notification implements ShouldQueue
         $senderName = $this->message->sender?->name ?? 'System';
 
         return (new MailMessage)
-            ->subject('New message from ' . $senderName . ' - Wontu')
+            ->subject(__('New message from :sender - Wontu', ['sender' => $senderName]))
             ->view('emails.notification', ['data' => $this->data()]);
     }
 
     private function data(): array
     {
         $senderName = $this->message->sender?->name ?? 'System';
-        
+
         $preview = $this->message->body;
         if (empty($preview) && $this->message->image_url) {
-            $preview = 'Sent an image';
+            $preview = __('Sent an image');
         }
 
         return [
-            'title' => 'New message from ' . $senderName,
-            'description' => str($preview)->limit(100),
+            'template_key' => 'NOTIF_NEW_CHAT_MESSAGE',
+            'params' => [
+                'sender' => $senderName,
+                'preview' => $preview,
+                'is_image' => empty($this->message->body) && $this->message->image_url,
+            ],
             'icon' => 'chat',
             'notification_type' => 'info',
             'action_url' => $this->message->conversation->type === 'offer_group' ? '/offers/' . $this->message->conversation->offer_id . '/chat' : '/chat/' . $this->message->conversation->id,

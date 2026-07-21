@@ -37,15 +37,15 @@ class OrderCancelledNotification extends Notification implements ShouldBroadcast
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Order Cancelled - Wontu')
+            ->subject(__('Order Cancelled - Wontu'))
             ->view('emails.notification', ['data' => $this->data()]);
     }
 
     private function data(): array
     {
         return [
-            'title' => 'Order Cancelled',
-            'description' => "{$this->buyer->name} cancelled their order in your {$this->offer->merchant_name} offer.",
+            'template_key' => 'NOTIF_ORDER_CANCELLED',
+            'params' => ['buyer_name' => $this->buyer->name, 'merchant_name' => $this->offer->merchant_name],
             'icon' => 'cancel',
             'notification_type' => 'warning',
             'action_url' => "/offers/{$this->offer->offer_id}",

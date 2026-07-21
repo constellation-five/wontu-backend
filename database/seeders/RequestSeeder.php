@@ -26,7 +26,7 @@ class RequestSeeder extends Seeder
             'category' => 'food',
             'location_label' => 'BCA Learning Institute',
             'location' => RequestModel::makePoint(-6.585841, 106.882002),
-            'arrival_time' => now()->addHours(2), 
+            'arrival_time' => now()->addHours(2),
             'total_votes' => 8,
         ]);
 
@@ -36,7 +36,7 @@ class RequestSeeder extends Seeder
             'category' => 'food',
             'location_label' => 'BCA Learning Institute',
             'location' => RequestModel::makePoint(-6.585841, 106.882002),
-            'arrival_time' => now()->addHours(6), 
+            'arrival_time' => now()->addHours(6),
             'total_votes' => 15,
         ]);
 

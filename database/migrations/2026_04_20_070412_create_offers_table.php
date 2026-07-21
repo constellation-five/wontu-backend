@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('offers', function (Blueprint $table) {
             $table->id('offer_id');
             $table->foreignUuid('seller_id')->constrained('users', 'user_id')->onDelete('cascade');
-            $table->enum('category',['food', 'other']);
+            $table->enum('category', ['food', 'other']);
             $table->string('merchant_name', 64);
             $table->dateTime('closing_time');
             $table->dateTime('arrival_time');

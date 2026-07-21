@@ -35,15 +35,15 @@ class ItemsArrivedNotification extends Notification implements ShouldBroadcastNo
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Items Have Arrived - Wontu')
+            ->subject(__('Items Have Arrived - Wontu'))
             ->view('emails.notification', ['data' => $this->data()]);
     }
 
     private function data(): array
     {
         return [
-            'title' => 'Items Have Arrived',
-            'description' => "The items for the {$this->offer->merchant_name} offer you joined have arrived.",
+            'template_key' => 'NOTIF_ITEMS_ARRIVED',
+            'params' => ['merchant_name' => $this->offer->merchant_name],
             'icon' => 'local_shipping',
             'notification_type' => 'success',
             'action_url' => "/offers/{$this->offer->offer_id}",

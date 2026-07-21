@@ -79,7 +79,7 @@ class GoogleAuthController extends Controller
         $pendingUser = session('pending_user');
 
         if (! $pendingUser) {
-            return response()->json(['message' => 'No pending registration found for this Google account.'], 400);
+            return response()->json(['message' => __('No pending registration found for this Google account.')], 400);
         }
 
         $user = User::create([
@@ -96,7 +96,7 @@ class GoogleAuthController extends Controller
         session()->save();
 
         return response()->json([
-            'message' => 'Successfully registered and signed in.',
+            'message' => __('Successfully registered and signed in.'),
         ], 201);
     }
 }

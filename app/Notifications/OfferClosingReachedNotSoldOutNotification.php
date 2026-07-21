@@ -35,15 +35,15 @@ class OfferClosingReachedNotSoldOutNotification extends Notification implements 
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Offer Closed - Wontu')
+            ->subject(__('Offer Closed - Wontu'))
             ->view('emails.notification', ['data' => $this->data()]);
     }
 
     private function data(): array
     {
         return [
-            'title' => 'Offer Closed',
-            'description' => "Your {$this->offer->merchant_name} offer's closing time was reached and it has been closed automatically, not fully sold out.",
+            'template_key' => 'NOTIF_OFFER_CLOSING_REACHED_NOT_SOLD_OUT',
+            'params' => ['merchant_name' => $this->offer->merchant_name],
             'icon' => 'inventory_2',
             'notification_type' => 'warning',
             'action_url' => "/offers/{$this->offer->offer_id}",

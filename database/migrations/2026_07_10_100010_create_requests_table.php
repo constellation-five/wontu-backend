@@ -12,15 +12,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('requests', function (Blueprint $table) {
-            $table->id('request_id'); 
-            $table->uuid('requester_id'); 
+            $table->id('request_id');
+            $table->uuid('requester_id');
             $table->string('location_label', 255)->nullable();
             $table->geometry('location', subtype: 'point', srid: 4326)->nullable();
             $table->string('item_name', 64);
             $table->enum('category', ['food', 'other']);
             $table->dateTime('arrival_time');
             $table->integer('total_votes')->default(0);
-            $table->timestamps(); 
+            $table->timestamps();
 
             $table->foreign('requester_id')->references('user_id')->on('users')->onDelete('cascade');
         });

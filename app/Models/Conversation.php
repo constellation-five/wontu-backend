@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 #[Fillable(['type', 'offer_id'])]
 class Conversation extends Model
@@ -49,7 +50,7 @@ class Conversation extends Model
         return $arrivedAt === null || now()->lte($arrivedAt->copy()->addDay());
     }
 
-    public function chatClosesAt(): ?\Illuminate\Support\Carbon
+    public function chatClosesAt(): ?Carbon
     {
         if ($this->type !== 'offer_group' || $this->offer?->arrived_at === null) {
             return null;
