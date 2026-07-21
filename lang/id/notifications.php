@@ -31,7 +31,7 @@ return [
     ],
     'NOTIF_OFFER_SOLD_OUT_EARLY' => [
         'title' => 'Offer Habis Terjual',
-        'description' => 'Offer :merchant_name Anda habis terjual sebelum waktu penutupannya dan telah ditutup secara otomatis.',
+        'description' => 'Offer :merchant_name Anda habis terjual sebelum waktu penutupannya. Offer akan ditutup secara otomatis ketika mencapai waktu penutupannya.',
     ],
     'NOTIF_ORDER_CANCELLED' => [
         'title' => 'Order Dibatalkan',
@@ -71,7 +71,7 @@ return [
     ],
     'NOTIF_OFFER_CLOSING_REACHED_NOT_SOLD_OUT' => [
         'title' => 'Offer Ditutup',
-        'description' => 'Waktu penutupan offer :merchant_name Anda telah tercapai dan telah ditutup secara otomatis, tidak habis terjual sepenuhnya.',
+        'description' => 'Waktu penutupan offer :merchant_name telah tercapai. Offer tersebut tidak habis terjual, jadi akan tetap terbuka hingga Anda menutupnya secara manual.',
     ],
     'NOTIF_NEW_CHAT_MESSAGE' => [
         'title' => 'Pesan baru dari :sender',

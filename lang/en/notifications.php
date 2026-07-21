@@ -31,7 +31,7 @@ return [
     ],
     'NOTIF_OFFER_SOLD_OUT_EARLY' => [
         'title' => 'Offer Sold Out',
-        'description' => 'Your :merchant_name offer sold out before its closing time and has been closed automatically.',
+        'description' => 'Your :merchant_name offer sold out early. It will be closed automatically when it reaches its closing time.',
     ],
     'NOTIF_ORDER_CANCELLED' => [
         'title' => 'Order Cancelled',
@@ -59,7 +59,7 @@ return [
     ],
     'NOTIF_ITEM_ADJUSTED' => [
         'title' => 'Your Order Was Adjusted',
-        'description' => 'The seller reduced available stock for \':itemName\' in the :merchant_name offer, so your quantity was adjusted to :newQuantity.',
+        'description' => 'The seller reduced available stock for :itemName in the :merchant_name offer, so your quantity was adjusted to :newQuantity.',
     ],
     'NOTIF_OFFER_EDITED_DISRUPTIVE' => [
         'title' => 'Important Offer Changes',
@@ -71,7 +71,7 @@ return [
     ],
     'NOTIF_OFFER_CLOSING_REACHED_NOT_SOLD_OUT' => [
         'title' => 'Offer Closed',
-        'description' => 'Your :merchant_name offer\'s closing time was reached and it has been closed automatically, not fully sold out.',
+        'description' => 'Your :merchant_name offer\'s closing time was reached. It was not fully sold out, so it will remain open until you manually close it.',
     ],
     'NOTIF_NEW_CHAT_MESSAGE' => [
         'title' => 'New message from :sender',
