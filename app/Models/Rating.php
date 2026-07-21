@@ -33,5 +33,4 @@ class Rating extends Model
     {
         return $this->belongsTo(Offer::class, 'offer_id', 'offer_id');
     }
-
 }

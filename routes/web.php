@@ -36,6 +36,7 @@ Route::middleware('auth')->group(function () {
         $user = $request->user();
         $userData = $user->toArray();
         $userData['language'] = $user->preferredLocale();
+
         return $userData;
     });
 

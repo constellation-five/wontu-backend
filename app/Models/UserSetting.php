@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['user_id', 'notifications', 'language', 'dark_mode'])]
+#[Fillable(['user_id', 'notifications', 'language', 'theme'])]
 class UserSetting extends Model
 {
     use HasUuids;
@@ -23,7 +23,6 @@ class UserSetting extends Model
     {
         return [
             'notifications' => 'array',
-            'dark_mode' => 'boolean',
         ];
     }
 

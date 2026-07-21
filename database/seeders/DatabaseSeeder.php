@@ -25,7 +25,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             OfferSeeder::class,
             RequestSeeder::class,
-            HistorySeeder::class
+            HistorySeeder::class,
         ]);
     }
 }

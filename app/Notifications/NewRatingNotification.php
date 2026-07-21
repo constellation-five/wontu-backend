@@ -49,7 +49,7 @@ class NewRatingNotification extends Notification implements ShouldBroadcastNow
             'title' => 'New Rating Received',
             'description' => "{$this->rater->username} gave you {$this->ratingValue} stars for {$this->offer->category}.",
             'icon' => 'star',
-            'action_url' => "/profile/{$notifiable->user_id}"
+            'action_url' => "/profile/{$notifiable->user_id}",
         ];
     }
 }

@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::table('ratings', function (Blueprint $table) {
             // Add offer_id column
             $table->foreignId('offer_id')->constrained('offers', 'offer_id')->cascadeOnDelete();
-            
+
             // Add new unique constraint FIRST so the rater_id FK still has an index
             $table->unique(['rater_id', 'rated_user_id', 'offer_id']);
         });
