@@ -12,6 +12,7 @@ use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use NotificationChannels\WebPush\WebPushChannel;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -36,25 +37,41 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perSecond(2);
         });
 
-        // Intercept every notification's "mail" channel before Laravel sends
+        // Intercept every notification's "mail" and "webpush" channels before Laravel sends
         // it synchronously: skip it entirely if the recipient has turned off
-        // email for that notification's category (see NotificationCategories),
-        // and otherwise hand it off to a rate-limited queued job instead, so
-        // a slow/throttled mail provider never blocks the request thread.
+        // that channel for that notification's category (see NotificationCategories).
         // The 'broadcast'/'database' channels are unaffected and still send
         // immediately, regardless of this setting.
         Event::listen(NotificationSending::class, function (NotificationSending $event) {
-            if ($event->channel !== 'mail') {
-                return true;
-            }
+            if ($event->channel === 'mail') {
+                if (SendQueuedNotificationMail::$isSending) {
+                    return true;
+                }
 
-            if ($event->notifiable instanceof User && ! $this->wantsEmailFor($event->notifiable, $event->notification)) {
+                if ($event->notifiable instanceof User && ! $this->wantsEmailFor($event->notifiable, $event->notification)) {
+                    return false;
+                }
+
+                SendQueuedNotificationMail::dispatch($event->notifiable, $event->notification);
+
                 return false;
             }
 
-            SendQueuedNotificationMail::dispatch($event->notifiable, $event->notification);
+            if ($event->channel === WebPushChannel::class) {
+                if ($event->notifiable instanceof User && ! $this->wantsPushFor($event->notifiable, $event->notification)) {
+                    return false;
+                }
+                return true;
+            }
 
-            return false;
+            return true;
+        });
+
+        Event::listen(\NotificationChannels\WebPush\Events\NotificationFailed::class, function ($event) {
+            \Illuminate\Support\Facades\Log::error('WebPush Failed:', [
+                'endpoint' => $event->subscription->endpoint,
+                'reason' => $event->report->getReason(),
+            ]);
         });
     }
 
@@ -72,9 +89,28 @@ class AppServiceProvider extends ServiceProvider
         $settings = UserSetting::where('user_id', $user->user_id)->first();
 
         if (! $settings || empty($settings->notifications)) {
+            $defaultSettings = UserSetting::getDefaultNotifications();
+            return $defaultSettings[$category]['email'] ?? false;
+        }
+
+        return ($settings->notifications[$category]['email'] ?? false) !== false;
+    }
+
+    private function wantsPushFor(User $user, Notification $notification): bool
+    {
+        $category = NotificationCategories::categoryFor($notification);
+
+        if ($category === null) {
             return true;
         }
 
-        return ($settings->notifications[$category]['email'] ?? true) !== false;
+        $settings = UserSetting::where('user_id', $user->user_id)->first();
+
+        if (! $settings || empty($settings->notifications)) {
+            $defaultSettings = UserSetting::getDefaultNotifications();
+            return $defaultSettings[$category]['push'] ?? false;
+        }
+
+        return ($settings->notifications[$category]['push'] ?? false) !== false;
     }
 }

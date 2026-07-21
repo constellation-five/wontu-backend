@@ -4,10 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreRatingRequest;
 use App\Http\Requests\UpdateProfileRequest;
-use App\Models\Offer;
 use App\Models\Rating;
 use App\Models\User;
-use App\Notifications\NewRatingNotification;
 use App\Notifications\UserFollowedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -321,11 +319,6 @@ class ProfileController extends Controller
 
         if ($existingRating) {
             $existingRating->update($request->validated());
-            $offer = Offer::find($request->offer_id);
-            if ($offer) {
-                $ratedUser = User::find($userId);
-                $ratedUser->notify(new NewRatingNotification($currentUser, $request->rating, $offer));
-            }
 
             return response()->json([
                 'success' => true,
@@ -339,12 +332,6 @@ class ProfileController extends Controller
             'rated_user_id' => $userId,
             ...$request->validated(),
         ]);
-
-        $offer = Offer::find($request->offer_id);
-        if ($offer) {
-            $ratedUser = User::find($userId);
-            $ratedUser->notify(new NewRatingNotification($currentUser, $request->rating, $offer));
-        }
 
         return response()->json([
             'success' => true,

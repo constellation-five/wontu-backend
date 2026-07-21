@@ -38,8 +38,22 @@ class UserSetting extends Model
      */
     public static function getDefaultNotifications(): array
     {
+        $defaultPushCategories = [
+            'new-orders',
+            'offer-lifecycle',
+            'offer-updates',
+            'order-status',
+        ];
+
         return collect(NotificationCategories::all())
-            ->map(fn () => ['push' => false, 'email' => true])
+            ->mapWithKeys(function ($value, $key) use ($defaultPushCategories) {
+                return [
+                    $key => [
+                        'push' => in_array($key, $defaultPushCategories),
+                        'email' => false,
+                    ],
+                ];
+            })
             ->all();
     }
 }

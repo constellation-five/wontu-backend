@@ -101,4 +101,12 @@ return [
         'title' => 'Offer Updated',
         'description' => 'The :merchant_name offer was updated by the seller.',
     ],
+    'NOTIF_FOLLOWING_NEW_OFFER' => [
+        'title' => 'New Offer from :user_name',
+        'description' => ':user_name just created a new offer: :offer_name.',
+    ],
+    'NOTIF_FOLLOWING_NEW_REQUEST' => [
+        'title' => 'New Request from :user_name',
+        'description' => ':user_name just created a new request: :request_name.',
+    ],
 ];

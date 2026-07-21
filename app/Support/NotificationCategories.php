@@ -4,6 +4,8 @@ namespace App\Support;
 
 use App\Notifications\BuyerJoinedNotification;
 use App\Notifications\BuyerRemovedFromOfferNotification;
+use App\Notifications\FollowingUserNewOfferNotification;
+use App\Notifications\FollowingUserNewRequestNotification;
 use App\Notifications\ItemAdjustedNotification;
 use App\Notifications\ItemsArrivedNotification;
 use App\Notifications\NewChatMessageNotification;
@@ -11,6 +13,7 @@ use App\Notifications\OfferAutoClosedSoldOutNotification;
 use App\Notifications\OfferClosedNotification;
 use App\Notifications\OfferClosingReachedNotSoldOutNotification;
 use App\Notifications\OfferCompletedNotification;
+use App\Notifications\OfferCreatedFromLikedRequestNotification;
 use App\Notifications\OfferDeletedNotification;
 use App\Notifications\OfferEditedNotification;
 use App\Notifications\OfferSoldOutEarlyNotification;
@@ -40,10 +43,10 @@ class NotificationCategories
                 'label' => 'New orders & payments',
                 'description' => 'A buyer joins, places, updates, or cancels an order on one of your offers, or submits proof of payment.',
                 'notifications' => [
-                    BuyerJoinedNotification::class,
                     OrderPlacedNotification::class,
                     OrderUpdatedNotification::class,
                     OrderCancelledNotification::class,
+                    BuyerJoinedNotification::class,
                     PaymentProofUploadedNotification::class,
                 ],
             ],
@@ -52,8 +55,15 @@ class NotificationCategories
                 'description' => 'One of your offers closes automatically — either it reached its closing time or sold out.',
                 'notifications' => [
                     OfferClosingReachedNotSoldOutNotification::class,
-                    OfferAutoClosedSoldOutNotification::class,
                     OfferSoldOutEarlyNotification::class,
+                    OfferAutoClosedSoldOutNotification::class,
+                ],
+            ],
+            'liked-request-offers' => [
+                'label' => 'Offers from liked requests',
+                'description' => 'Another user creates an offer based on a request you liked.',
+                'notifications' => [
+                    OfferCreatedFromLikedRequestNotification::class,
                 ],
             ],
             'offer-updates' => [
@@ -61,11 +71,11 @@ class NotificationCategories
                 'description' => 'An offer you\'ve joined is edited, closed, deleted, or completed, or your order on it is adjusted or removed.',
                 'notifications' => [
                     OfferEditedNotification::class,
+                    BuyerRemovedFromOfferNotification::class,
+                    ItemAdjustedNotification::class,
                     OfferClosedNotification::class,
                     OfferDeletedNotification::class,
                     OfferCompletedNotification::class,
-                    BuyerRemovedFromOfferNotification::class,
-                    ItemAdjustedNotification::class,
                 ],
             ],
             'order-status' => [
@@ -78,7 +88,7 @@ class NotificationCategories
             ],
             'social' => [
                 'label' => 'Social',
-                'description' => 'Someone follows your profile.',
+                'description' => 'Someone starts following your profile.',
                 'notifications' => [
                     UserFollowedNotification::class,
                 ],
@@ -88,6 +98,14 @@ class NotificationCategories
                 'description' => 'You receive a new message in a group or private chat.',
                 'notifications' => [
                     NewChatMessageNotification::class,
+                ],
+            ],
+            'following-new-posts' => [
+                'label' => 'Following new posts',
+                'description' => 'Someone you follow creates a new offer or request.',
+                'notifications' => [
+                    FollowingUserNewOfferNotification::class,
+                    FollowingUserNewRequestNotification::class,
                 ],
             ],
         ];

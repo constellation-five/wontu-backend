@@ -3,24 +3,25 @@
 namespace App\Notifications;
 
 use App\Models\Offer;
+use App\Models\User;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use NotificationChannels\WebPush\WebPushChannel;
 
-class OfferSoldOutEarlyNotification extends Notification implements ShouldBroadcastNow
+class FollowingUserNewOfferNotification extends Notification implements ShouldQueue
 {
-    use \App\Notifications\Traits\SendsWebPush, Queueable;
+    use Queueable;
 
     public function __construct(
+        public readonly User $poster,
         public readonly Offer $offer,
     ) {}
 
     public function via(object $notifiable): array
     {
-        return ['broadcast', 'database', 'mail', WebPushChannel::class];
+        return ['broadcast', 'database', 'mail'];
     }
 
     public function toBroadcast(object $notifiable): BroadcastMessage
@@ -36,17 +37,17 @@ class OfferSoldOutEarlyNotification extends Notification implements ShouldBroadc
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject(__('Offer Sold Out Early - Wontu'))
+            ->subject(__('notifications.NOTIF_FOLLOWING_NEW_OFFER.title', $this->data()['params']))
             ->view('emails.notification', ['data' => $this->data()]);
     }
 
     private function data(): array
     {
         return [
-            'template_key' => 'NOTIF_OFFER_SOLD_OUT_EARLY',
-            'params' => ['merchant_name' => $this->offer->merchant_name],
-            'icon' => 'inventory_2',
-            'notification_type' => 'success',
+            'template_key' => 'NOTIF_FOLLOWING_NEW_OFFER',
+            'params' => ['user_name' => $this->poster->name, 'offer_name' => $this->offer->merchant_name],
+            'icon' => 'local_offer',
+            'notification_type' => 'info',
             'action_url' => "/offers/{$this->offer->offer_id}",
         ];
     }
