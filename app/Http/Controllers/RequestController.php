@@ -59,7 +59,7 @@ class RequestController extends Controller
     {
         $validated = $request->validate([
             'item_name' => 'required|string|max:64',
-            'category' => 'required|in:food,other',
+            'category' => 'required|string|in:food,electronics,fashion,home,beauty,gaming,sports,other',
             'arrival_time' => 'required|date',
             'location_label' => 'nullable|string|max:255',
             'location_lat' => 'nullable|numeric',
@@ -102,7 +102,7 @@ class RequestController extends Controller
 
         $validated = $request->validate([
             'item_name' => 'sometimes|required|string|max:64',
-            'category' => 'sometimes|required|in:food,other',
+            'category' => 'sometimes|required|string|in:food,electronics,fashion,home,beauty,gaming,sports,other',
             'arrival_time' => 'sometimes|required|date',
             'location_label' => 'nullable|string|max:255',
             'location_lat' => 'nullable|numeric',
