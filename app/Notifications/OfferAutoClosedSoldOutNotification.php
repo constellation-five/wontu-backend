@@ -8,10 +8,11 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use NotificationChannels\WebPush\WebPushChannel;
 
 class OfferAutoClosedSoldOutNotification extends Notification implements ShouldBroadcastNow
 {
-    use Queueable;
+    use \App\Notifications\Traits\SendsWebPush, Queueable;
 
     public function __construct(
         public readonly Offer $offer,
@@ -19,7 +20,7 @@ class OfferAutoClosedSoldOutNotification extends Notification implements ShouldB
 
     public function via(object $notifiable): array
     {
-        return ['broadcast', 'database', 'mail'];
+        return ['broadcast', 'database', 'mail', WebPushChannel::class];
     }
 
     public function toBroadcast(object $notifiable): BroadcastMessage

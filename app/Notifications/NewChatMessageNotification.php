@@ -8,16 +8,17 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use NotificationChannels\WebPush\WebPushChannel;
 
 class NewChatMessageNotification extends Notification implements ShouldQueue
 {
-    use Queueable;
+    use \App\Notifications\Traits\SendsWebPush, Queueable;
 
     public function __construct(public Message $message) {}
 
     public function via(object $notifiable): array
     {
-        return ['database', 'broadcast', 'mail'];
+        return ['database', 'broadcast', 'mail', WebPushChannel::class];
     }
 
     public function toBroadcast(object $notifiable): BroadcastMessage
