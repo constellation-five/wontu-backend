@@ -32,34 +32,40 @@ class ProcessOfferLifecycle extends Command
     {
         $now = now();
 
-        // Offers whose closing_time has passed but aren't closed yet.
+        // Condition 1: Offers whose closing_time has passed but aren't closed yet.
         Offer::whereNull('closed_at')->where('closing_time', '<=', $now)->with('items', 'seller', 'buyers')->get()
             ->each(function (Offer $offer) {
-                $offer->closed_at = now();
-                $offer->save();
-
                 $soldOut = $offer->items->isNotEmpty() && $offer->items->every(fn ($i) => $i->current_slot >= $i->slot);
 
-                $offer->seller->notify($soldOut
-                    ? new OfferAutoClosedSoldOutNotification($offer)
-                    : new OfferClosingReachedNotSoldOutNotification($offer));
+                if ($soldOut) {
+                    // Both closing time reached AND sold out: Auto-close it
+                    $offer->closed_at = now();
+                    $offer->save();
 
-                foreach ($offer->buyers as $buyer) {
-                    $buyer->notify(new OfferClosedNotification($offer));
+                    $offer->seller->notify(new OfferAutoClosedSoldOutNotification($offer));
+
+                    foreach ($offer->buyers as $buyer) {
+                        $buyer->notify(new OfferClosedNotification($offer));
+                    }
+                } else {
+                    // Just closing time reached, not sold out: Notify seller, do NOT close
+                    if (!$offer->notified_closing_reached) {
+                        $offer->notified_closing_reached = true;
+                        $offer->save();
+                        $offer->seller->notify(new OfferClosingReachedNotSoldOutNotification($offer));
+                    }
                 }
             });
 
-        // Offers not yet closed, still before closing_time, but every item sold out.
-        Offer::whereNull('closed_at')->where('closing_time', '>', $now)->with('items', 'seller', 'buyers')->get()
+        // Condition 2: Offers not yet closed, still before closing_time, but every item sold out.
+        Offer::whereNull('closed_at')->where('closing_time', '>', $now)->with('items', 'seller')->get()
             ->filter(fn (Offer $offer) => $offer->items->isNotEmpty() && $offer->items->every(fn ($i) => $i->current_slot >= $i->slot))
             ->each(function (Offer $offer) {
-                $offer->closed_at = now();
-                $offer->save();
-
-                $offer->seller->notify(new OfferSoldOutEarlyNotification($offer));
-
-                foreach ($offer->buyers as $buyer) {
-                    $buyer->notify(new OfferClosedNotification($offer));
+                // Just sold out early: Notify seller, do NOT close
+                if (!$offer->notified_sold_out_early) {
+                    $offer->notified_sold_out_early = true;
+                    $offer->save();
+                    $offer->seller->notify(new OfferSoldOutEarlyNotification($offer));
                 }
             });
     }

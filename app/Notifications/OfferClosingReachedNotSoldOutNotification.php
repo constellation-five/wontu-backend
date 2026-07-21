@@ -36,7 +36,7 @@ class OfferClosingReachedNotSoldOutNotification extends Notification implements 
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject(__('Offer Closed - Wontu'))
+            ->subject(__('Offer Closing Time Reached - Wontu'))
             ->view('emails.notification', ['data' => $this->data()]);
     }
 

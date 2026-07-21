@@ -36,7 +36,7 @@ class OfferAutoClosedSoldOutNotification extends Notification implements ShouldB
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject(__('Offer Closed - Sold Out - Wontu'))
+            ->subject(__('Offer Closed - Sold Out and Closing Time Reached - Wontu'))
             ->view('emails.notification', ['data' => $this->data()]);
     }
 

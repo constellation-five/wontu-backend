@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\Offer;
+use App\Models\Request;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Notifications\Messages\BroadcastMessage;
@@ -10,12 +11,13 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use NotificationChannels\WebPush\WebPushChannel;
 
-class OfferSoldOutEarlyNotification extends Notification implements ShouldBroadcastNow
+class OfferCreatedFromLikedRequestNotification extends Notification implements ShouldBroadcastNow
 {
     use \App\Notifications\Traits\SendsWebPush, Queueable;
 
     public function __construct(
         public readonly Offer $offer,
+        public readonly Request $request
     ) {}
 
     public function via(object $notifiable): array
@@ -36,17 +38,20 @@ class OfferSoldOutEarlyNotification extends Notification implements ShouldBroadc
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject(__('Offer Sold Out Early - Wontu'))
+            ->subject(__('New Offer from a Liked Request - Wontu'))
             ->view('emails.notification', ['data' => $this->data()]);
     }
 
     private function data(): array
     {
         return [
-            'template_key' => 'NOTIF_OFFER_SOLD_OUT_EARLY',
-            'params' => ['merchant_name' => $this->offer->merchant_name],
+            'template_key' => 'NOTIF_OFFER_CREATED_FROM_LIKED_REQUEST',
+            'params' => [
+                'merchant_name' => $this->offer->merchant_name,
+                'request_title' => $this->request->item_name,
+            ],
             'icon' => 'inventory_2',
-            'notification_type' => 'success',
+            'notification_type' => 'info',
             'action_url' => "/offers/{$this->offer->offer_id}",
         ];
     }

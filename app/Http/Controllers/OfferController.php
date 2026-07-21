@@ -153,6 +153,16 @@ class OfferController extends Controller
 
         $this->chatService->getOrCreateGroupConversation($offer);
 
+        if (!empty($validated['based_on_request_id'])) {
+            $reqModel = \App\Models\Request::find($validated['based_on_request_id']);
+            if ($reqModel) {
+                $voters = $reqModel->voters()->where('users.user_id', '!=', $request->user()->user_id)->get();
+                foreach ($voters as $voter) {
+                    $voter->notify(new \App\Notifications\OfferCreatedFromLikedRequestNotification($offer, $reqModel));
+                }
+            }
+        }
+
         return response()->json([
             'message' => __('Offer created successfully.'),
             'offer' => $offer->load('items'),
@@ -1018,6 +1028,11 @@ class OfferController extends Controller
             $offer->closing_time = Carbon::parse($validated['closing_time'])->format('Y-m-d H:i:s');
             $offer->arrival_time = Carbon::parse($validated['arrival_time'])->format('Y-m-d H:i:s');
             $offer->has_cod_payment = $validated['has_cod_payment'] ?? false;
+            
+            // Reset notifications state on edit
+            $offer->notified_sold_out_early = false;
+            $offer->notified_closing_reached = false;
+            
             $offer->save();
 
             // Step 6: sync payment methods.
