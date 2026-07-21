@@ -17,7 +17,7 @@ class StoreOfferRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'category' => ['required', Rule::in(['food', 'other'])],
+            'category' => ['required', Rule::in(['food', 'electronics', 'fashion', 'home', 'beauty', 'gaming', 'sports', 'other'])],
             'merchant_name' => ['nullable', 'string', 'max:64'],
             'location_label' => ['nullable', 'string', 'max:255'],
             // The `location` column is a NOT NULL spatial POINT (required for the spatial index), so every offer must carry coordinates.

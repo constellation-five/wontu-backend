@@ -205,6 +205,7 @@ class OfferController extends Controller
                 'offer_id' => $offerBuyer->offer_id,
                 'merchant_name' => $offerBuyer->offer->merchant_name,
                 'merchant_id' => $offerBuyer->offer->seller_id,
+                'category' => $offerBuyer->offer->category,
                 'location_label' => $offerBuyer->offer->location_label,
                 'closing_time' => $offerBuyer->offer->closing_time,
                 'arrival_time' => $offerBuyer->offer->arrival_time,
@@ -851,7 +852,7 @@ class OfferController extends Controller
         }
 
         $validated = Validator::make($request->all(), [
-            'category' => ['required', Rule::in(['food', 'other'])],
+            'category' => 'required|string|in:food,electronics,fashion,home,beauty,gaming,sports,other',
             'merchant_name' => ['nullable', 'string', 'max:64'],
             'location_label' => ['nullable', 'string', 'max:255'],
             'location_lat' => ['required', 'numeric', 'between:-90,90'],
