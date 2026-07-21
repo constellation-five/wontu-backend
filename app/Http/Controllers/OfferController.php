@@ -80,14 +80,14 @@ class OfferController extends Controller
         // Validasi: current_slot tidak boleh negatif (kecuali diizinkan untuk rollback)
         if (! $allowNegative && $newCurrentSlot < 0) {
             return response()->json([
-                'message' => __('Tidak bisa mengurangi stok item \':item_name\' lebih dari yang sudah dipesan.', ['item_name' => $item->item_name]),
+                'message' => __('Cannot reduce stock of :item_name more than already ordered.', ['item_name' => $item->item_name]),
             ], 400);
         }
 
         // Validasi: current_slot tidak boleh melebihi slot
         if ($newCurrentSlot > $item->slot) {
             return response()->json([
-                'message' => __('Stok item \':item_name\' tidak cukup.', ['item_name' => $item->item_name]),
+                'message' => __('Not enough :item_name in stock.', ['item_name' => $item->item_name]),
                 'available' => $item->slot - $item->current_slot,
             ], 400);
         }

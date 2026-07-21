@@ -59,7 +59,7 @@ return [
     ],
     'NOTIF_ITEM_ADJUSTED' => [
         'title' => 'Your Order Was Adjusted',
-        'description' => 'The seller reduced available stock for \':itemName\' in the :merchant_name offer, so your quantity was adjusted to :newQuantity.',
+        'description' => 'The seller reduced available stock for :itemName in the :merchant_name offer, so your quantity was adjusted to :newQuantity.',
     ],
     'NOTIF_OFFER_EDITED_DISRUPTIVE' => [
         'title' => 'Important Offer Changes',
