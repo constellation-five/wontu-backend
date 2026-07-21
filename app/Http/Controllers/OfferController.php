@@ -205,6 +205,8 @@ class OfferController extends Controller
                 'merchant_name' => $offerBuyer->offer->merchant_name,
                 'merchant_id' => $offerBuyer->offer->seller_id,
                 'location_label' => $offerBuyer->offer->location_label,
+                'closing_time' => $offerBuyer->offer->closing_time,
+                'arrival_time' => $offerBuyer->offer->arrival_time,
                 'closed_at' => $offerBuyer->offer->closed_at,
                 'arrived_at' => $offerBuyer->offer->arrived_at,
                 'is_confirmed' => $offerBuyer->is_confirmed,
