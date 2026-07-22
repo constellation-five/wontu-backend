@@ -40,7 +40,7 @@ class GoogleAuthController extends Controller
             session()->regenerate();
             session()->save();
 
-            return redirect(env('FRONTEND_CALLBACK_URL', ''));
+            return redirect(config('app.frontend_callback_url'));
         }
 
         // User doesn't exist. Store Google info in session and prompt for username to complete registration.
@@ -53,7 +53,7 @@ class GoogleAuthController extends Controller
             ],
         ]);
 
-        return redirect(env('FRONTEND_REGISTER_URL', ''));
+        return redirect(config('app.frontend_register_url'));
     }
 
     public function getPendingUser()
