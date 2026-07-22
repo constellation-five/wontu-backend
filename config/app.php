@@ -123,4 +123,8 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'frontend_url' => env('FRONTEND_URL', 'http://localhost:4200'),
+    'frontend_callback_url' => env('FRONTEND_CALLBACK_URL', 'http://localhost:4200'),
+    'frontend_register_url' => env('FRONTEND_REGISTER_URL', 'http://localhost:4200/complete-signup'),
+
 ];
