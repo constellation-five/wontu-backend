@@ -111,7 +111,15 @@ class OfferController extends Controller
                 ->withCount('receivedRatings');
         }])
             ->withCoordinates()
-            ->whereNull('closed_at')
+            ->where(function ($query) use ($request) {
+                $query->whereNull('closed_at');
+                if ($user = $request->user()) {
+                    $query->orWhere(function ($q) use ($user) {
+                        $q->where('seller_id', $user->user_id)
+                          ->whereNull('arrived_at');
+                    });
+                }
+            })
             ->when($search, function ($query, $search) {
                 return $query->where(function ($q) use ($search) {
                     $q->where('merchant_name', 'LIKE', "%{$search}%")
